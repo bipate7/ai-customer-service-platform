@@ -14,6 +14,7 @@ A modern, responsive customer service chatbot interface built with HTML, CSS, Ja
 ## Project Structure
 
 genai-customer-service/
+
 ├── frontend/ # HTML, CSS, JS files
 ├── backend/ # Flask API
 └── README.md
