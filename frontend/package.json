@@ -1,0 +1,9 @@
+{
+  "name": "ai-customer-service-frontend",
+  "version": "1.0.0",
+  "description": "AI Customer Service Platform Frontend",
+  "scripts": {
+    "start": "python server.py"
+  },
+  "dependencies": {}
+}

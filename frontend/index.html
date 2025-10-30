@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>AI Customer Service Platform</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="styles/style.css" />
+  </head>
+  <body
+    class="font-inter bg-gradient-to-br from-blue-50 to-indigo-100 min-h-screen"
+  >
+    <!-- Header -->
+    <header class="bg-white shadow-sm">
+      <div
+        class="container mx-auto px-4 py-4 flex justify-between items-center"
+      >
+        <div class="flex items-center space-x-3">
+          <div
+            class="w-10 h-10 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-lg flex items-center justify-center"
+          >
+            <i class="fas fa-robot text-white text-lg"></i>
+          </div>
+          <h1 class="text-xl font-bold text-gray-800">AI Customer Support</h1>
+        </div>
+        <div class="flex items-center space-x-4">
+          <button
+            id="themeToggle"
+            class="p-2 rounded-full hover:bg-gray-100 transition-colors"
+          >
+            <i class="fas fa-moon text-gray-600"></i>
+          </button>
+          <button
+            id="uploadBtn"
+            class="px-4 py-2 bg-green-500 hover:bg-green-600 text-white rounded-lg transition-colors flex items-center space-x-2"
+          >
+            <i class="fas fa-upload"></i>
+            <span>Upload Docs</span>
+          </button>
+          <button
+            id="clearChat"
+            class="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition-colors flex items-center space-x-2"
+          >
+            <i class="fas fa-trash-alt"></i>
+            <span>Clear Chat</span>
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <!-- Upload Modal -->
+    <div
+      id="uploadModal"
+      class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50"
+    >
+      <div class="bg-white rounded-2xl shadow-xl p-6 w-full max-w-md mx-4">
+        <div class="flex justify-between items-center mb-4">
+          <h3 class="text-lg font-semibold text-gray-800">Upload Document</h3>
+          <button id="closeModal" class="text-gray-500 hover:text-gray-700">
+            <i class="fas fa-times text-xl"></i>
+          </button>
+        </div>
+
+        <div
+          class="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center mb-4"
+        >
+          <i class="fas fa-cloud-upload-alt text-4xl text-gray-400 mb-3"></i>
+          <p class="text-gray-600 mb-2">Drag & drop your document here</p>
+          <p class="text-sm text-gray-500 mb-4">or</p>
+          <input
+            type="file"
+            id="fileInput"
+            accept=".pdf,.docx,.txt"
+            class="hidden"
+          />
+          <button
+            id="browseBtn"
+            class="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition-colors"
+          >
+            Browse Files
+          </button>
+          <p class="text-xs text-gray-500 mt-3">
+            Supported: PDF, DOCX, TXT (Max: 10MB)
+          </p>
+        </div>
+
+        <div id="fileInfo" class="hidden mb-4 p-3 bg-blue-50 rounded-lg">
+          <div class="flex justify-between items-center">
+            <div>
+              <p class="font-medium text-blue-800" id="fileName"></p>
+              <p class="text-sm text-blue-600" id="fileSize"></p>
+            </div>
+            <button id="removeFile" class="text-blue-500 hover:text-blue-700">
+              <i class="fas fa-times"></i>
+            </button>
+          </div>
+        </div>
+
+        <div class="flex space-x-3">
+          <button
+            id="cancelUpload"
+            class="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+          >
+            Cancel
+          </button>
+          <button
+            id="confirmUpload"
+            class="flex-1 px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            disabled
+          >
+            <i class="fas fa-upload mr-2"></i>
+            Upload
+          </button>
+        </div>
+
+        <div id="uploadProgress" class="hidden mt-4">
+          <div class="flex justify-between text-sm text-gray-600 mb-1">
+            <span>Uploading...</span>
+            <span id="progressPercent">0%</span>
+          </div>
+          <div class="w-full bg-gray-200 rounded-full h-2">
+            <div
+              id="progressBar"
+              class="bg-blue-500 h-2 rounded-full transition-all duration-300"
+              style="width: 0%"
+            ></div>
+          </div>
+        </div>
+
+        <div id="uploadResult" class="hidden mt-4 p-3 rounded-lg"></div>
+      </div>
+    </div>
+
+    <!-- Main Content -->
+    <main class="container mx-auto px-4 py-8">
+      <div class="max-w-4xl mx-auto">
+        <!-- Knowledge Base Stats -->
+        <div class="bg-white rounded-2xl shadow-lg p-6 mb-8">
+          <div class="flex items-center justify-between">
+            <div>
+              <h2 class="text-xl font-bold text-gray-800 mb-2">
+                Knowledge Base
+              </h2>
+              <p class="text-gray-600">
+                Your AI assistant can search through uploaded documents
+              </p>
+            </div>
+            <div id="knowledgeStats" class="text-right">
+              <div class="text-2xl font-bold text-blue-600" id="totalChunks">
+                8
+              </div>
+              <div class="text-sm text-gray-500">Knowledge Chunks</div>
+            </div>
+          </div>
+          <div class="mt-4 grid grid-cols-1 md:grid-cols-3 gap-4 text-center">
+            <div class="p-3 bg-blue-50 rounded-lg">
+              <div class="text-lg font-semibold text-blue-700" id="baseChunks">
+                8
+              </div>
+              <div class="text-sm text-blue-600">Base Documents</div>
+            </div>
+            <div class="p-3 bg-green-50 rounded-lg">
+              <div
+                class="text-lg font-semibold text-green-700"
+                id="uploadedDocs"
+              >
+                0
+              </div>
+              <div class="text-sm text-green-600">Uploaded Files</div>
+            </div>
+            <div class="p-3 bg-purple-50 rounded-lg">
+              <div class="text-lg font-semibold text-purple-700" id="totalDocs">
+                8
+              </div>
+              <div class="text-sm text-purple-600">Total Content</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Welcome Card -->
+        <div id="welcomeCard" class="bg-white rounded-2xl shadow-lg p-6 mb-8">
+          <div class="flex items-start space-x-4">
+            <div
+              class="w-12 h-12 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-lg flex items-center justify-center"
+            >
+              <i class="fas fa-headset text-white text-xl"></i>
+            </div>
+            <div>
+              <h2 class="text-xl font-bold text-gray-800 mb-2">
+                Welcome to AI Customer Service
+              </h2>
+              <p class="text-gray-600 mb-4">
+                I can search through our knowledge base and uploaded documents
+                to find the best answers for you.
+              </p>
+              <div class="flex flex-wrap gap-2">
+                <button
+                  class="suggestion-btn px-4 py-2 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded-lg transition-colors"
+                >
+                  How do I reset my password?
+                </button>
+                <button
+                  class="suggestion-btn px-4 py-2 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded-lg transition-colors"
+                >
+                  What are your business hours?
+                </button>
+                <button
+                  class="suggestion-btn px-4 py-2 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded-lg transition-colors"
+                >
+                  Upload a document to expand my knowledge
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Chat Container -->
+        <div class="bg-white rounded-2xl shadow-lg overflow-hidden">
+          <!-- Chat Header -->
+          <div
+            class="bg-gradient-to-r from-blue-500 to-indigo-600 px-6 py-4 text-white"
+          >
+            <div class="flex items-center space-x-3">
+              <div
+                class="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center"
+              >
+                <i class="fas fa-robot"></i>
+              </div>
+              <div>
+                <h3 class="font-semibold">AI Assistant</h3>
+                <p class="text-blue-100 text-sm">Online • Ready to help</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Messages Container -->
+          <div id="chatContainer" class="h-96 overflow-y-auto p-6 space-y-6">
+            <!-- Messages will be dynamically added here -->
+          </div>
+
+          <!-- Typing Indicator -->
+          <div id="typingIndicator" class="px-6 py-4 hidden">
+            <div class="flex items-center space-x-2 text-gray-500">
+              <div class="flex space-x-1">
+                <div
+                  class="w-2 h-2 bg-gray-400 rounded-full animate-bounce"
+                ></div>
+                <div
+                  class="w-2 h-2 bg-gray-400 rounded-full animate-bounce"
+                  style="animation-delay: 0.1s"
+                ></div>
+                <div
+                  class="w-2 h-2 bg-gray-400 rounded-full animate-bounce"
+                  style="animation-delay: 0.2s"
+                ></div>
+              </div>
+              <span class="text-sm">AI Assistant is typing...</span>
+            </div>
+          </div>
+
+          <!-- Input Area -->
+          <div class="border-t border-gray-200 p-6">
+            <div class="flex space-x-4">
+              <div class="flex-1 relative">
+                <textarea
+                  id="messageInput"
+                  placeholder="Type your message here..."
+                  rows="1"
+                  class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none"
+                ></textarea>
+                <button
+                  id="sendButton"
+                  class="absolute right-3 bottom-3 p-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition-colors"
+                >
+                  <i class="fas fa-paper-plane"></i>
+                </button>
+              </div>
+            </div>
+            <div class="mt-3 flex justify-between items-center">
+              <div class="text-sm text-gray-500">
+                <i class="fas fa-shield-alt mr-1"></i>
+                Your conversations are secure and private
+              </div>
+              <div class="flex space-x-2">
+                <button
+                  class="p-2 text-gray-500 hover:text-blue-500 transition-colors"
+                >
+                  <i class="fas fa-paperclip"></i>
+                </button>
+                <button
+                  class="p-2 text-gray-500 hover:text-blue-500 transition-colors"
+                >
+                  <i class="fas fa-microphone"></i>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Features Section -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mt-8">
+          <div class="bg-white rounded-xl shadow p-6 text-center">
+            <div
+              class="w-12 h-12 bg-blue-100 text-blue-600 rounded-lg flex items-center justify-center mx-auto mb-4"
+            >
+              <i class="fas fa-search text-xl"></i>
+            </div>
+            <h3 class="font-semibold text-gray-800 mb-2">Smart Search</h3>
+            <p class="text-gray-600 text-sm">
+              Searches through all uploaded documents and knowledge base.
+            </p>
+          </div>
+          <div class="bg-white rounded-xl shadow p-6 text-center">
+            <div
+              class="w-12 h-12 bg-green-100 text-green-600 rounded-lg flex items-center justify-center mx-auto mb-4"
+            >
+              <i class="fas fa-file-upload text-xl"></i>
+            </div>
+            <h3 class="font-semibold text-gray-800 mb-2">Document Upload</h3>
+            <p class="text-gray-600 text-sm">
+              Upload PDF, DOCX, or TXT files to expand knowledge.
+            </p>
+          </div>
+          <div class="bg-white rounded-xl shadow p-6 text-center">
+            <div
+              class="w-12 h-12 bg-purple-100 text-purple-600 rounded-lg flex items-center justify-center mx-auto mb-4"
+            >
+              <i class="fas fa-graduation-cap text-xl"></i>
+            </div>
+            <h3 class="font-semibold text-gray-800 mb-2">Always Learning</h3>
+            <p class="text-gray-600 text-sm">
+              Continuously improves with new documents.
+            </p>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-white border-t border-gray-200 mt-12">
+      <div class="container mx-auto px-4 py-6">
+        <div class="flex flex-col md:flex-row justify-between items-center">
+          <div class="flex items-center space-x-2 mb-4 md:mb-0">
+            <div
+              class="w-6 h-6 bg-gradient-to-r from-blue-500 to-indigo-600 rounded flex items-center justify-center"
+            >
+              <i class="fas fa-robot text-white text-xs"></i>
+            </div>
+            <span class="text-gray-700 font-medium"
+              >AI Customer Service Platform</span
+            >
+          </div>
+          <div class="text-sm text-gray-500">
+            &copy; 2025 All rights reserved. Built with ❤️ for better customer
+            support.
+          </div>
+        </div>
+      </div>
+    </footer>
+
+    <script src="js/app.js"></script>
+  </body>
+</html>

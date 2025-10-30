@@ -1,0 +1,136 @@
+/* Custom styles for the AI Customer Service Platform */
+
+/* Smooth scrolling for chat container */
+#chatContainer {
+  scroll-behavior: smooth;
+}
+
+/* Custom scrollbar for chat container */
+#chatContainer::-webkit-scrollbar {
+  width: 6px;
+}
+
+#chatContainer::-webkit-scrollbar-track {
+  background: #f1f5f9;
+}
+
+#chatContainer::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 3px;
+}
+
+#chatContainer::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+/* Message animations */
+.message {
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* User message styling */
+.user-message {
+  background: linear-gradient(135deg, #3b82f6, #6366f1);
+  color: white;
+  border-radius: 18px 18px 4px 18px;
+  box-shadow: 0 4px 6px -1px rgba(59, 130, 246, 0.2);
+}
+
+/* Bot message styling */
+.bot-message {
+  background: #f8fafc;
+  color: #334155;
+  border-radius: 18px 18px 18px 4px;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+}
+
+/* Dark mode styles */
+.dark-mode {
+  background: linear-gradient(135deg, #0f172a, #1e293b);
+  color: #e2e8f0;
+}
+
+.dark-mode header {
+  background-color: #1e293b;
+  border-bottom: 1px solid #334155;
+}
+
+.dark-mode .bg-white {
+  background-color: #1e293b;
+  color: #e2e8f0;
+}
+
+.dark-mode .text-gray-800 {
+  color: #e2e8f0;
+}
+
+.dark-mode .text-gray-600 {
+  color: #94a3b8;
+}
+
+.dark-mode .border-gray-200 {
+  border-color: #334155;
+}
+
+.dark-mode .bg-gray-100 {
+  background-color: #334155;
+  color: #e2e8f0;
+}
+
+.dark-mode .bg-gray-100:hover {
+  background-color: #475569;
+}
+
+.dark-mode .border-gray-300 {
+  border-color: #475569;
+}
+
+.dark-mode footer {
+  background-color: #1e293b;
+  border-color: #334155;
+}
+
+/* Input focus styles */
+#messageInput:focus {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+/* Button hover effects */
+.suggestion-btn:hover {
+  transform: translateY(-1px);
+  transition: transform 0.2s;
+}
+
+#sendButton:hover {
+  transform: scale(1.05);
+  transition: transform 0.2s;
+}
+
+/* Responsive adjustments */
+@media (max-width: 640px) {
+  .container {
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+
+  #chatContainer {
+    height: 60vh;
+  }
+
+  .user-message,
+  .bot-message {
+    max-width: 85%;
+  }
+}
