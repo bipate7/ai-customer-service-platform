@@ -44,6 +44,28 @@ document.addEventListener("DOMContentLoaded", function () {
   initializeChat();
 
   // Event Listeners
+  // Add event listeners for question tabs
+  document.addEventListener("DOMContentLoaded", function () {
+    // ... your existing code ...
+
+    // Question tabs functionality
+    const questionTabs = document.querySelectorAll(".question-tab");
+
+    questionTabs.forEach((tab) => {
+      tab.addEventListener("click", function () {
+        if (this.id === "uploadDocBtn") {
+          openUploadModal();
+        } else {
+          const question = this.getAttribute("data-question");
+          messageInput.value = question;
+          sendMessage();
+        }
+      });
+    });
+
+    // ... rest of your existing code ...
+  });
+
   sendButton.addEventListener("click", sendMessage);
   messageInput.addEventListener("keypress", function (e) {
     if (e.key === "Enter" && !e.shiftKey) {

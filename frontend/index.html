@@ -185,43 +185,6 @@
           </div>
         </div>
 
-        <!-- Welcome Card -->
-        <div id="welcomeCard" class="bg-white rounded-2xl shadow-lg p-6 mb-8">
-          <div class="flex items-start space-x-4">
-            <div
-              class="w-12 h-12 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-lg flex items-center justify-center"
-            >
-              <i class="fas fa-headset text-white text-xl"></i>
-            </div>
-            <div>
-              <h2 class="text-xl font-bold text-gray-800 mb-2">
-                Welcome to AI Customer Service
-              </h2>
-              <p class="text-gray-600 mb-4">
-                I can search through our knowledge base and uploaded documents
-                to find the best answers for you.
-              </p>
-              <div class="flex flex-wrap gap-2">
-                <button
-                  class="suggestion-btn px-4 py-2 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded-lg transition-colors"
-                >
-                  How do I reset my password?
-                </button>
-                <button
-                  class="suggestion-btn px-4 py-2 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded-lg transition-colors"
-                >
-                  What are your business hours?
-                </button>
-                <button
-                  class="suggestion-btn px-4 py-2 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded-lg transition-colors"
-                >
-                  Upload a document to expand my knowledge
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-
         <!-- Chat Container -->
         <div class="bg-white rounded-2xl shadow-lg overflow-hidden">
           <!-- Chat Header -->
@@ -238,6 +201,42 @@
                 <h3 class="font-semibold">AI Assistant</h3>
                 <p class="text-blue-100 text-sm">Online • Ready to help</p>
               </div>
+            </div>
+          </div>
+
+          <!-- Add this after your chat container or in a prominent location -->
+          <div class="question-tabs-container mb-4">
+            <div class="flex flex-wrap gap-2 justify-center">
+              <button
+                class="question-tab bg-blue-100 hover:bg-blue-200 text-blue-800 px-4 py-2 rounded-lg transition-colors duration-200"
+                data-question="What are your business hours?"
+              >
+                🕒 Business Hours
+              </button>
+              <button
+                class="question-tab bg-green-100 hover:bg-green-200 text-green-800 px-4 py-2 rounded-lg transition-colors duration-200"
+                data-question="Do you offer technical support?"
+              >
+                🔧 Tech Support
+              </button>
+              <button
+                class="question-tab bg-purple-100 hover:bg-purple-200 text-purple-800 px-4 py-2 rounded-lg transition-colors duration-200"
+                data-question="What services do you provide?"
+              >
+                💼 Our Services
+              </button>
+              <button
+                class="question-tab bg-orange-100 hover:bg-orange-200 text-orange-800 px-4 py-2 rounded-lg transition-colors duration-200"
+                data-question="How can I contact customer service?"
+              >
+                📞 Contact Us
+              </button>
+              <button
+                class="question-tab bg-red-100 hover:bg-red-200 text-red-800 px-4 py-2 rounded-lg transition-colors duration-200"
+                id="uploadDocBtn"
+              >
+                📁 Upload Document
+              </button>
             </div>
           </div>
 

@@ -134,3 +134,28 @@
     max-width: 85%;
   }
 }
+.question-tab {
+  cursor: pointer;
+  border: none;
+  font-weight: 500;
+  transition: all 0.2s ease-in-out;
+}
+
+.question-tab:active {
+  transform: scale(0.95);
+}
+
+.question-tabs-container {
+  animation: fadeIn 0.5s ease-in-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
