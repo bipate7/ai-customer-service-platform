@@ -115,7 +115,8 @@ document.addEventListener("DOMContentLoaded", function () {
 
   async function loadKnowledgeStats() {
     try {
-      const API_BASE_URL = window.API_BASE_URL || "http://localhost:5000";
+      const API_BASE_URL =
+        "https://ai-customer-service-backend-rthi.onrender.com";
       const response = await fetch(`${API_BASE_URL}/api/knowledge/stats`);
       if (response.ok) {
         const stats = await response.json();
@@ -283,7 +284,8 @@ document.addEventListener("DOMContentLoaded", function () {
     formData.append("file", selectedFile);
 
     // Use environment-specific API URL
-    const API_BASE_URL = window.API_BASE_URL || "http://localhost:5000";
+    const API_BASE_URL =
+      "https://ai-customer-service-backend-rthi.onrender.com";
 
     // Show progress
     uploadProgress.classList.remove("hidden");
@@ -413,7 +415,8 @@ document.addEventListener("DOMContentLoaded", function () {
   async function sendMessageToAPI(message) {
     try {
       // Use environment-specific API URL
-      const API_BASE_URL = window.API_BASE_URL || "http://localhost:5000";
+      const API_BASE_URL =
+        "https://ai-customer-service-backend-rthi.onrender.com";
 
       console.log("Sending message to backend API:", message);
 
