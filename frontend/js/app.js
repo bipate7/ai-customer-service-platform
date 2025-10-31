@@ -9,7 +9,6 @@ document.addEventListener("DOMContentLoaded", function () {
   const themeToggle = document.getElementById("themeToggle");
   const typingIndicator = document.getElementById("typingIndicator");
   const welcomeCard = document.getElementById("welcomeCard");
-  const suggestionButtons = document.querySelectorAll(".suggestion-btn");
 
   // File Upload Elements
   const uploadBtn = document.getElementById("uploadBtn");
@@ -44,28 +43,6 @@ document.addEventListener("DOMContentLoaded", function () {
   initializeChat();
 
   // Event Listeners
-  // Add event listeners for question tabs
-  document.addEventListener("DOMContentLoaded", function () {
-    // ... your existing code ...
-
-    // Question tabs functionality
-    const questionTabs = document.querySelectorAll(".question-tab");
-
-    questionTabs.forEach((tab) => {
-      tab.addEventListener("click", function () {
-        if (this.id === "uploadDocBtn") {
-          openUploadModal();
-        } else {
-          const question = this.getAttribute("data-question");
-          messageInput.value = question;
-          sendMessage();
-        }
-      });
-    });
-
-    // ... rest of your existing code ...
-  });
-
   sendButton.addEventListener("click", sendMessage);
   messageInput.addEventListener("keypress", function (e) {
     if (e.key === "Enter" && !e.shiftKey) {
@@ -86,15 +63,28 @@ document.addEventListener("DOMContentLoaded", function () {
   removeFile.addEventListener("click", removeSelectedFile);
   confirmUpload.addEventListener("click", uploadFile);
 
-  // Add event listeners to suggestion buttons
-  suggestionButtons.forEach((button) => {
-    button.addEventListener("click", function () {
-      const text = this.textContent.trim();
-      if (text.includes("Upload a document")) {
+  // Question tabs functionality
+  const questionTabs = document.querySelectorAll(".question-tab");
+
+  questionTabs.forEach((tab) => {
+    tab.addEventListener("click", function () {
+      // Add click animation
+      this.style.transform = "scale(0.95)";
+      setTimeout(() => {
+        this.style.transform = "";
+      }, 150);
+
+      if (this.id === "uploadDocBtn") {
         openUploadModal();
       } else {
-        messageInput.value = text;
+        const question = this.getAttribute("data-question");
+        messageInput.value = question;
         sendMessage();
+
+        // Hide welcome card after clicking a question
+        if (welcomeCard) {
+          welcomeCard.style.display = "none";
+        }
       }
     });
   });
