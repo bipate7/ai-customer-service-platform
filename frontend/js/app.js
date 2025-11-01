@@ -1,4 +1,4 @@
-// AI Customer Service Platform - Frontend JavaScript with File Upload
+// AI Customer Service Platform - Enhanced with Creative Tab Selection
 
 document.addEventListener("DOMContentLoaded", function () {
   // DOM Elements
@@ -7,38 +7,15 @@ document.addEventListener("DOMContentLoaded", function () {
   const sendButton = document.getElementById("sendButton");
   const clearChatButton = document.getElementById("clearChat");
   const themeToggle = document.getElementById("themeToggle");
-  const typingIndicator = document.getElementById("typingIndicator");
   const welcomeCard = document.getElementById("welcomeCard");
   const inputQuestionTabs = document.getElementById("inputQuestionTabs");
-
-  // File Upload Elements
   const uploadBtn = document.getElementById("uploadBtn");
-  const uploadModal = document.getElementById("uploadModal");
-  const closeModal = document.getElementById("closeModal");
-  const cancelUpload = document.getElementById("cancelUpload");
-  const fileInput = document.getElementById("fileInput");
-  const browseBtn = document.getElementById("browseBtn");
-  const fileInfo = document.getElementById("fileInfo");
-  const fileName = document.getElementById("fileName");
-  const fileSize = document.getElementById("fileSize");
-  const removeFile = document.getElementById("removeFile");
-  const confirmUpload = document.getElementById("confirmUpload");
-  const uploadProgress = document.getElementById("uploadProgress");
-  const progressBar = document.getElementById("progressBar");
-  const progressPercent = document.getElementById("progressPercent");
-  const uploadResult = document.getElementById("uploadResult");
-
-  // Knowledge Stats Elements
-  const totalChunks = document.getElementById("totalChunks");
-  const baseChunks = document.getElementById("baseChunks");
-  const uploadedDocs = document.getElementById("uploadedDocs");
-  const totalDocs = document.getElementById("totalDocs");
 
   // State
   let isDarkMode = false;
   let chatHistory = [];
   let currentUser = null;
-  let selectedFile = null;
+  let selectedTab = null;
 
   // Initialize the chat
   initializeChat();
@@ -55,34 +32,33 @@ document.addEventListener("DOMContentLoaded", function () {
   // Input focus/blur events for question tabs
   messageInput.addEventListener("focus", showInputQuestionTabs);
   messageInput.addEventListener("blur", function () {
-    // Delay hiding to allow for tab clicks
     setTimeout(hideInputQuestionTabs, 200);
   });
 
   clearChatButton.addEventListener("click", clearChat);
   themeToggle.addEventListener("click", toggleTheme);
-
-  // File Upload Event Listeners
   uploadBtn.addEventListener("click", openUploadModal);
-  closeModal.addEventListener("click", closeUploadModal);
-  cancelUpload.addEventListener("click", closeUploadModal);
-  browseBtn.addEventListener("click", () => fileInput.click());
-  fileInput.addEventListener("change", handleFileSelect);
-  removeFile.addEventListener("click", removeSelectedFile);
-  confirmUpload.addEventListener("click", uploadFile);
 
-  // Question tabs functionality - both welcome and input tabs
+  // Enhanced Question tabs functionality with selection states
   const questionTabs = document.querySelectorAll(
     ".question-tab, .quick-question-tab"
   );
 
   questionTabs.forEach((tab) => {
-    tab.addEventListener("click", function () {
-      // Add click animation
-      this.style.transform = "scale(0.95)";
-      setTimeout(() => {
-        this.style.transform = "";
-      }, 150);
+    tab.addEventListener("click", function (e) {
+      // Create ripple effect
+      createRippleEffect(e, this);
+
+      // Remove selection from all tabs
+      removeAllSelections();
+
+      // Add selected class to clicked tab
+      this.classList.add("selected");
+      selectedTab = this;
+
+      // Store selection in session storage
+      const category = this.getAttribute("data-category");
+      sessionStorage.setItem("selectedTab", category);
 
       if (this.id === "uploadDocBtn") {
         openUploadModal();
@@ -97,8 +73,8 @@ document.addEventListener("DOMContentLoaded", function () {
             welcomeCard.style.display = "none";
           }
 
-          // Auto-send the question
-          sendMessage();
+          // Auto-focus input and prepare for sending
+          messageInput.focus();
         }
       }
     });
@@ -112,6 +88,7 @@ document.addEventListener("DOMContentLoaded", function () {
     // Hide question tabs when user starts typing
     if (this.value.trim() !== "") {
       hideInputQuestionTabs();
+      removeAllSelections();
     } else {
       showInputQuestionTabs();
     }
@@ -127,9 +104,6 @@ document.addEventListener("DOMContentLoaded", function () {
     const localHistory = JSON.parse(localStorage.getItem("chatHistory")) || [];
     chatHistory = localHistory;
 
-    // Load knowledge stats
-    await loadKnowledgeStats();
-
     if (localHistory.length > 0) {
       welcomeCard.style.display = "none";
       localHistory.forEach((message) => {
@@ -144,31 +118,22 @@ document.addEventListener("DOMContentLoaded", function () {
 
     // Initialize input question tabs state
     hideInputQuestionTabs();
+
+    // Restore selected tab from session storage
+    const savedTab = sessionStorage.getItem("selectedTab");
+    if (savedTab) {
+      const tabToSelect = document.querySelector(
+        `[data-category="${savedTab}"]`
+      );
+      if (tabToSelect) {
+        tabToSelect.classList.add("selected");
+        selectedTab = tabToSelect;
+      }
+    }
   }
 
   function generateUserId() {
     return "user-" + Date.now() + "-" + Math.random().toString(36).substr(2, 9);
-  }
-
-  async function loadKnowledgeStats() {
-    try {
-      const API_BASE_URL =
-        "https://ai-customer-service-backend-rthi.onrender.com";
-      const response = await fetch(`${API_BASE_URL}/api/knowledge/stats`);
-      if (response.ok) {
-        const stats = await response.json();
-        updateStatsDisplay(stats);
-      }
-    } catch (error) {
-      console.error("Error loading knowledge stats:", error);
-    }
-  }
-
-  function updateStatsDisplay(stats) {
-    totalChunks.textContent = stats.total_chunks;
-    baseChunks.textContent = stats.base_knowledge_chunks;
-    uploadedDocs.textContent = stats.uploaded_documents;
-    totalDocs.textContent = stats.total_chunks;
   }
 
   async function sendMessage() {
@@ -188,24 +153,12 @@ document.addEventListener("DOMContentLoaded", function () {
       welcomeCard.style.display = "none";
     }
 
-    // Hide question tabs after sending
+    // Hide question tabs and remove selection after sending
     hideInputQuestionTabs();
+    removeAllSelections();
 
-    // Show typing indicator
-    showTypingIndicator();
-
-    try {
-      // Get AI response from backend
-      const botResponse = await sendMessageToAPI(message);
-      hideTypingIndicator();
-      await addMessageToChat(botResponse, "bot");
-    } catch (error) {
-      hideTypingIndicator();
-      console.error("Error getting AI response:", error);
-      const fallbackResponse =
-        "I'm having trouble connecting right now. Please try again in a moment.";
-      await addMessageToChat(fallbackResponse, "bot");
-    }
+    // Simulate AI response (replace with actual API call)
+    simulateAIResponse(message);
   }
 
   async function addMessageToChat(message, sender, saveToHistory = true) {
@@ -261,159 +214,33 @@ document.addEventListener("DOMContentLoaded", function () {
     inputQuestionTabs.classList.add("hidden");
   }
 
-  // File Upload Functions
-  function openUploadModal() {
-    uploadModal.classList.remove("hidden");
-    resetUploadForm();
+  // Selection Management Functions
+  function removeAllSelections() {
+    questionTabs.forEach((tab) => {
+      tab.classList.remove("selected");
+    });
+    selectedTab = null;
+    sessionStorage.removeItem("selectedTab");
   }
 
-  function closeUploadModal() {
-    uploadModal.classList.add("hidden");
-    resetUploadForm();
-  }
+  // Ripple Effect Function
+  function createRippleEffect(event, element) {
+    const ripple = document.createElement("span");
+    const rect = element.getBoundingClientRect();
+    const size = Math.max(rect.width, rect.height);
+    const x = event.clientX - rect.left - size / 2;
+    const y = event.clientY - rect.top - size / 2;
 
-  function resetUploadForm() {
-    selectedFile = null;
-    fileInput.value = "";
-    fileInfo.classList.add("hidden");
-    confirmUpload.disabled = true;
-    uploadProgress.classList.add("hidden");
-    uploadResult.classList.add("hidden");
-    progressBar.style.width = "0%";
-    progressPercent.textContent = "0%";
-  }
+    ripple.style.width = ripple.style.height = size + "px";
+    ripple.style.left = x + "px";
+    ripple.style.top = y + "px";
+    ripple.classList.add("ripple");
 
-  function handleFileSelect(event) {
-    const file = event.target.files[0];
-    if (file) {
-      // Check file type
-      const validTypes = [".pdf", ".docx", ".txt"];
-      const fileExtension = "." + file.name.split(".").pop().toLowerCase();
+    element.appendChild(ripple);
 
-      if (!validTypes.includes(fileExtension)) {
-        showUploadResult("Please select a PDF, DOCX, or TXT file.", "error");
-        return;
-      }
-
-      // Check file size (10MB limit)
-      if (file.size > 10 * 1024 * 1024) {
-        showUploadResult("File size must be less than 10MB.", "error");
-        return;
-      }
-
-      selectedFile = file;
-      updateFileInfo(file);
-    }
-  }
-
-  function updateFileInfo(file) {
-    fileName.textContent = file.name;
-    fileSize.textContent = formatFileSize(file.size);
-    fileInfo.classList.remove("hidden");
-    confirmUpload.disabled = false;
-  }
-
-  function formatFileSize(bytes) {
-    if (bytes === 0) return "0 Bytes";
-    const k = 1024;
-    const sizes = ["Bytes", "KB", "MB", "GB"];
-    const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i];
-  }
-
-  function removeSelectedFile() {
-    selectedFile = null;
-    fileInput.value = "";
-    fileInfo.classList.add("hidden");
-    confirmUpload.disabled = true;
-  }
-
-  async function uploadFile() {
-    if (!selectedFile) return;
-
-    const formData = new FormData();
-    formData.append("file", selectedFile);
-
-    // Use environment-specific API URL
-    const API_BASE_URL =
-      "https://ai-customer-service-backend-rthi.onrender.com";
-
-    // Show progress
-    uploadProgress.classList.remove("hidden");
-    confirmUpload.disabled = true;
-
-    try {
-      const response = await fetch(`${API_BASE_URL}/api/upload`, {
-        method: "POST",
-        body: formData,
-      });
-
-      // Simulate progress
-      simulateUploadProgress();
-
-      const result = await response.json();
-
-      if (response.ok) {
-        showUploadResult(`✅ ${result.message}`, "success");
-        await loadKnowledgeStats();
-
-        setTimeout(() => {
-          closeUploadModal();
-        }, 2000);
-      } else {
-        showUploadResult(`❌ ${result.error}`, "error");
-        confirmUpload.disabled = false;
-      }
-    } catch (error) {
-      console.error("Upload error:", error);
-      showUploadResult("❌ Upload failed. Please try again.", "error");
-      confirmUpload.disabled = false;
-    }
-  }
-
-  function simulateUploadProgress() {
-    let progress = 0;
-    const interval = setInterval(() => {
-      progress += Math.random() * 10;
-      if (progress >= 90) {
-        clearInterval(interval);
-      } else {
-        progressBar.style.width = progress + "%";
-        progressPercent.textContent = Math.round(progress) + "%";
-      }
-    }, 200);
-  }
-
-  function showUploadResult(message, type) {
-    uploadResult.textContent = message;
-    uploadResult.className = "mt-4 p-3 rounded-lg ";
-
-    if (type === "success") {
-      uploadResult.classList.add(
-        "bg-green-100",
-        "text-green-800",
-        "border",
-        "border-green-200"
-      );
-    } else {
-      uploadResult.classList.add(
-        "bg-red-100",
-        "text-red-800",
-        "border",
-        "border-red-200"
-      );
-    }
-
-    uploadResult.classList.remove("hidden");
-  }
-
-  function showTypingIndicator() {
-    typingIndicator.classList.remove("hidden");
-    scrollToBottom();
-  }
-
-  function hideTypingIndicator() {
-    typingIndicator.classList.add("hidden");
+    setTimeout(() => {
+      ripple.remove();
+    }, 600);
   }
 
   function scrollToBottom() {
@@ -429,6 +256,7 @@ document.addEventListener("DOMContentLoaded", function () {
       chatContainer.innerHTML = "";
       chatHistory = [];
       localStorage.removeItem("chatHistory");
+      removeAllSelections();
 
       // Show welcome card again
       if (welcomeCard) {
@@ -469,44 +297,32 @@ document.addEventListener("DOMContentLoaded", function () {
     localStorage.setItem("darkMode", "false");
   }
 
-  // API Integration Function
-  async function sendMessageToAPI(message) {
-    try {
-      // Use environment-specific API URL
-      const API_BASE_URL =
-        "https://ai-customer-service-backend-rthi.onrender.com";
+  function openUploadModal() {
+    alert("Upload modal would open here. This is a demo feature.");
+  }
 
-      console.log("Sending message to backend API:", message);
+  // Simulate AI Response (Replace with actual API call)
+  function simulateAIResponse(userMessage) {
+    const responses = {
+      "What are your business hours?":
+        "Our business hours are Monday to Friday, 9:00 AM to 6:00 PM EST. We're also available on Saturdays from 10:00 AM to 2:00 PM EST.",
+      "Do you offer technical support?":
+        "Yes! We offer 24/7 technical support for all our products. You can reach our support team via phone, email, or live chat.",
+      "What services do you provide?":
+        "We provide a wide range of services including web development, mobile app development, cloud solutions, AI integration, and ongoing technical support.",
+      "How can I contact customer service?":
+        "You can contact our customer service team at support@company.com or call us at 1-800-123-4567. We're here to help 24/7!",
+      "What is your refund policy?":
+        "We offer a 30-day money-back guarantee on all our services. If you're not satisfied, contact our support team for a full refund.",
+    };
 
-      const response = await fetch(`${API_BASE_URL}/api/chat`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          message: message,
-          userId: currentUser,
-          conversationContext: chatHistory.slice(-4),
-        }),
-      });
+    const response =
+      responses[userMessage] ||
+      "Thank you for your question! I'll help you with that. Our team is dedicated to providing the best service possible.";
 
-      console.log("API Response status:", response.status);
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      const data = await response.json();
-      console.log("API Response data:", data);
-
-      if (data.status === "success") {
-        return data.response;
-      } else {
-        throw new Error(data.error || "Unknown error occurred");
-      }
-    } catch (error) {
-      console.error("Error sending message to API:", error);
-      throw error;
-    }
+    // Simulate typing delay
+    setTimeout(() => {
+      addMessageToChat(response, "bot");
+    }, 1000 + Math.random() * 1000);
   }
 });
