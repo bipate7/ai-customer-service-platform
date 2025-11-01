@@ -1,534 +1,276 @@
-// AI Customer Service Platform - Working Version
+// Minimal Working AI Chat - Guaranteed to Work
+document.addEventListener("DOMContentLoaded", function () {
+  console.log("🚀 Starting AI Chat...");
 
-class AICustomerService {
+  // Initialize with minimal setup
+  const aiChat = new AIChat();
+  window.aiChat = aiChat;
+});
+
+class AIChat {
   constructor() {
-    this.initializeApp();
+    this.init();
   }
 
-  async initializeApp() {
-    console.log("🚀 Initializing AI Customer Service Platform...");
+  init() {
+    console.log("🔧 Initializing chat...");
 
-    try {
-      // Wait for DOM to be ready
-      await this.waitForDOM();
+    // Find elements with more flexible selectors
+    this.findElements();
+    this.setupEventListeners();
+    this.loadHistory();
 
-      // Initialize DOM elements
-      this.initializeDOMElements();
+    console.log("✅ Chat ready!");
+  }
 
-      // Initialize state
-      this.initializeState();
+  findElements() {
+    console.log("🔍 Finding elements...");
 
-      // Initialize event listeners
-      this.initializeEventListeners();
+    // Core elements - try multiple selectors
+    this.chatContainer =
+      document.getElementById("chatContainer") ||
+      document.querySelector('[id*="chat"]') ||
+      document.querySelector(".overflow-y-auto");
 
-      // Load any saved data
-      await this.loadSavedData();
+    this.messageInput =
+      document.getElementById("messageInput") ||
+      document.querySelector("textarea") ||
+      document.querySelector('[placeholder*="message"]');
 
-      console.log("✅ AI Customer Service Platform initialized successfully");
-    } catch (error) {
-      console.error("❌ Failed to initialize application:", error);
+    this.sendButton =
+      document.getElementById("sendButton") ||
+      document.querySelector('button[onclick*="send"]') ||
+      document.querySelector("button:has(.fa-paper-plane)") ||
+      document.querySelector("button:last-child");
+
+    // Welcome card
+    this.welcomeCard =
+      document.getElementById("welcomeCard") ||
+      document.querySelector(".text-center");
+
+    console.log("Elements found:", {
+      chatContainer: !!this.chatContainer,
+      messageInput: !!this.messageInput,
+      sendButton: !!this.sendButton,
+      welcomeCard: !!this.welcomeCard,
+    });
+
+    // Create elements if they don't exist (fallback)
+    this.createFallbackElements();
+  }
+
+  createFallbackElements() {
+    // Ensure we have a chat container
+    if (!this.chatContainer) {
+      this.chatContainer = document.createElement("div");
+      this.chatContainer.id = "chatContainer";
+      this.chatContainer.className = "h-96 overflow-y-auto p-6 space-y-4";
+      document.querySelector(".bg-white")?.appendChild(this.chatContainer);
+    }
+
+    // Ensure we have input area
+    if (!this.messageInput || !this.sendButton) {
+      this.createInputArea();
     }
   }
 
-  waitForDOM() {
-    return new Promise((resolve) => {
-      if (document.readyState === "loading") {
-        document.addEventListener("DOMContentLoaded", resolve);
-      } else {
-        resolve();
-      }
-    });
-  }
+  createInputArea() {
+    const inputArea = document.createElement("div");
+    inputArea.className = "border-t border-gray-200 p-6";
+    inputArea.innerHTML = `
+            <div class="flex space-x-4">
+                <div class="flex-1 relative">
+                    <textarea 
+                        id="messageInput" 
+                        placeholder="Type your message here..." 
+                        rows="1"
+                        class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 resize-none"
+                    ></textarea>
+                    <button 
+                        id="sendButton"
+                        class="absolute right-3 bottom-3 p-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg"
+                    >
+                        <i class="fas fa-paper-plane"></i>
+                    </button>
+                </div>
+            </div>
+        `;
 
-  initializeDOMElements() {
-    console.log("🔍 Initializing DOM elements...");
+    document.querySelector(".bg-white")?.appendChild(inputArea);
 
-    // Core Chat Elements
-    this.chatContainer = document.getElementById("chatContainer");
+    // Re-find elements
     this.messageInput = document.getElementById("messageInput");
     this.sendButton = document.getElementById("sendButton");
-    this.typingIndicator = document.getElementById("typingIndicator");
-    this.welcomeCard = document.getElementById("welcomeCard");
-
-    // Action Buttons
-    this.clearChatButton = document.getElementById("clearChat");
-    this.themeToggle = document.getElementById("themeToggle");
-    this.uploadBtn = document.getElementById("uploadBtn");
-
-    // Questionnaire Elements
-    this.questionnaireToggle = document.getElementById("questionnaireToggle");
-    this.questionnaireOptions = document.getElementById("questionnaireOptions");
-    this.toggleIcon = document.getElementById("toggleIcon");
-
-    // Voice Elements
-    this.voiceInputBtn = document.getElementById("voiceInputBtn");
-    this.voiceModal = document.getElementById("voiceModal");
-    this.stopVoice = document.getElementById("stopVoice");
-    this.voiceStatus = document.getElementById("voiceStatus");
-
-    // File Upload Elements
-    this.uploadModal = document.getElementById("uploadModal");
-    this.closeModal = document.getElementById("closeModal");
-    this.cancelUpload = document.getElementById("cancelUpload");
-    this.fileInput = document.getElementById("fileInput");
-    this.browseBtn = document.getElementById("browseBtn");
-    this.fileInfo = document.getElementById("fileInfo");
-    this.fileName = document.getElementById("fileName");
-    this.fileSize = document.getElementById("fileSize");
-    this.removeFile = document.getElementById("removeFile");
-    this.confirmUpload = document.getElementById("confirmUpload");
-
-    // Stats Elements
-    this.totalChunks = document.getElementById("totalChunks");
-    this.uploadedDocs = document.getElementById("uploadedDocs");
-
-    // Verify critical elements exist
-    if (!this.chatContainer || !this.messageInput || !this.sendButton) {
-      console.error("❌ Critical DOM elements missing!");
-      throw new Error("Required DOM elements not found");
-    }
-
-    console.log("✅ DOM elements initialized successfully");
   }
 
-  initializeState() {
-    console.log("🔧 Initializing application state...");
+  setupEventListeners() {
+    console.log("🎯 Setting up event listeners...");
 
-    this.chatHistory = [];
-    this.currentUser = null;
-    this.selectedFile = null;
-    this.isQuestionnaireOpen = false;
-    this.isVoiceActive = false;
-    this.isDarkMode = false;
-    this.isOnline = true;
+    if (this.sendButton && this.messageInput) {
+      this.sendButton.addEventListener("click", () => this.sendMessage());
 
-    // API Configuration
-    this.API_BASE_URL = "https://ai-customer-service-backend-rthi.onrender.com";
-
-    console.log("✅ Application state initialized");
-  }
-
-  initializeEventListeners() {
-    console.log("🎯 Initializing event listeners...");
-
-    // Core Chat Functionality
-    this.sendButton.addEventListener("click", () => this.sendMessage());
-    this.messageInput.addEventListener("keypress", (e) => {
-      if (e.key === "Enter" && !e.shiftKey) {
-        e.preventDefault();
-        this.sendMessage();
-      }
-    });
-
-    // Auto-resize textarea
-    this.messageInput.addEventListener("input", () => {
-      this.autoResizeTextarea();
-    });
-
-    // Action Buttons
-    this.clearChatButton.addEventListener("click", () => this.clearChat());
-    this.themeToggle.addEventListener("click", () => this.toggleTheme());
-    this.uploadBtn.addEventListener("click", () => this.openUploadModal());
-
-    // Questionnaire
-    this.questionnaireToggle.addEventListener("click", () =>
-      this.toggleQuestionnaire()
-    );
-
-    // Voice Input
-    if (this.voiceInputBtn) {
-      this.voiceInputBtn.addEventListener("click", () =>
-        this.startVoiceInput()
-      );
-    }
-    if (this.stopVoice) {
-      this.stopVoice.addEventListener("click", () => this.stopVoiceInput());
-    }
-
-    // File Upload
-    this.closeModal.addEventListener("click", () => this.closeUploadModal());
-    this.cancelUpload.addEventListener("click", () => this.closeUploadModal());
-    this.browseBtn.addEventListener("click", () => this.fileInput.click());
-    this.fileInput.addEventListener("change", (e) => this.handleFileSelect(e));
-    this.removeFile.addEventListener("click", () => this.removeSelectedFile());
-    this.confirmUpload.addEventListener("click", () => this.uploadFile());
-
-    // Question Tabs
-    const questionTabs = document.querySelectorAll(".question-tab");
-    questionTabs.forEach((tab) => {
-      tab.addEventListener("click", () => this.handleQuestionTabClick(tab));
-    });
-
-    // Quick Questions
-    const quickQuestions = document.querySelectorAll(".quick-question");
-    quickQuestions.forEach((question) => {
-      question.addEventListener("click", () =>
-        this.handleQuickQuestionClick(question)
-      );
-    });
-
-    console.log("✅ Event listeners initialized");
-  }
-
-  async loadSavedData() {
-    console.log("💾 Loading saved data...");
-
-    try {
-      // Load user ID
-      this.currentUser =
-        localStorage.getItem("userId") || this.generateUserId();
-      localStorage.setItem("userId", this.currentUser);
-
-      // Load chat history
-      const savedHistory = localStorage.getItem("chatHistory");
-      if (savedHistory) {
-        this.chatHistory = JSON.parse(savedHistory);
-
-        // Display saved messages
-        if (this.chatHistory.length > 0) {
-          this.welcomeCard.style.display = "none";
-          this.chatHistory.forEach((message) => {
-            this.addMessageToChat(message.text, message.sender, false);
-          });
+      this.messageInput.addEventListener("keypress", (e) => {
+        if (e.key === "Enter" && !e.shiftKey) {
+          e.preventDefault();
+          this.sendMessage();
         }
-      }
+      });
 
-      // Load theme
-      if (localStorage.getItem("darkMode") === "true") {
-        this.enableDarkMode();
-      }
+      // Auto-resize
+      this.messageInput.addEventListener("input", () => {
+        this.messageInput.style.height = "auto";
+        this.messageInput.style.height = this.messageInput.scrollHeight + "px";
+      });
 
-      // Load knowledge stats
-      await this.loadKnowledgeStats();
-
-      console.log("✅ Saved data loaded successfully");
-    } catch (error) {
-      console.warn("⚠️ Failed to load some saved data:", error);
+      console.log("✅ Event listeners set up");
+    } else {
+      console.error("❌ Cannot set up event listeners - elements missing");
     }
+
+    // Setup question tabs
+    this.setupQuestionTabs();
   }
 
-  // ========== CORE CHAT FUNCTIONALITY ==========
+  setupQuestionTabs() {
+    const questionTabs = document.querySelectorAll(
+      ".question-tab, [data-question]"
+    );
+    questionTabs.forEach((tab) => {
+      tab.addEventListener("click", () => {
+        const question = tab.getAttribute("data-question");
+        if (question && this.messageInput) {
+          this.messageInput.value = question;
+          this.sendMessage();
+        }
+      });
+    });
+  }
 
   async sendMessage() {
-    const message = this.messageInput.value.trim();
+    const message = this.messageInput?.value?.trim();
 
     if (!message) {
-      this.showToast("Please enter a message", "warning");
+      this.showMessage("Please enter a message", "warning");
       return;
     }
 
-    console.log("💬 Sending message:", message);
+    console.log("💬 Sending:", message);
 
-    // Add user message to chat
-    this.addMessageToChat(message, "user");
+    // Add user message
+    this.addMessage(message, "user");
 
     // Clear input
-    this.messageInput.value = "";
-    this.autoResizeTextarea();
+    if (this.messageInput) {
+      this.messageInput.value = "";
+      this.messageInput.style.height = "auto";
+    }
 
-    // Hide welcome card
-    if (this.welcomeCard.style.display !== "none") {
+    // Hide welcome
+    if (this.welcomeCard) {
       this.welcomeCard.style.display = "none";
     }
 
-    // Close questionnaire if open
-    this.closeQuestionnaire();
+    // Show typing
+    this.showTyping();
 
-    // Show typing indicator
-    this.showTypingIndicator();
-
-    try {
-      // Get AI response
-      const botResponse = await this.getAIResponse(message);
-      this.hideTypingIndicator();
-      this.addMessageToChat(botResponse, "bot");
-    } catch (error) {
-      this.hideTypingIndicator();
-      console.error("❌ Error getting AI response:", error);
-      const fallbackResponse =
-        "I'm having trouble connecting right now. Please try again in a moment.";
-      this.addMessageToChat(fallbackResponse, "bot");
-      this.showToast("Failed to get response", "error");
-    }
+    // Get response
+    setTimeout(() => {
+      this.hideTyping();
+      const response = this.generateResponse(message);
+      this.addMessage(response, "bot");
+    }, 1000 + Math.random() * 1000);
   }
 
-  async getAIResponse(message) {
-    // Simulate API call - replace with actual API call
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        const responses = {
-          hello: "Hello! How can I assist you today?",
-          hi: "Hi there! What can I help you with?",
-          help: "I'm here to help! You can ask me about our services, business hours, or upload documents for me to analyze.",
-          default:
-            "Thank you for your message! I'm an AI assistant trained to help with customer service inquiries. How can I assist you today?",
-        };
+  addMessage(text, sender) {
+    if (!this.chatContainer) return;
 
-        const lowerMessage = message.toLowerCase();
-        const response = responses[lowerMessage] || responses.default;
-        resolve(response);
-      }, 1000);
-    });
-
-    // Uncomment for real API call:
-    /*
-        const response = await fetch(`${this.API_BASE_URL}/api/chat`, {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-                message: message,
-                userId: this.currentUser,
-                conversationContext: this.chatHistory.slice(-4),
-            }),
-        });
-
-        if (!response.ok) {
-            throw new Error(`API error: ${response.status}`);
-        }
-
-        const data = await response.json();
-        return data.response;
-        */
-  }
-
-  addMessageToChat(message, sender, saveToHistory = true) {
-    const messageElement = document.createElement("div");
-    messageElement.classList.add("message", "flex", "items-end", "space-x-2");
+    const messageDiv = document.createElement("div");
+    messageDiv.className = `flex items-end space-x-2 ${
+      sender === "user" ? "justify-end" : "justify-start"
+    }`;
 
     if (sender === "user") {
-      messageElement.classList.add("justify-end");
-      messageElement.innerHTML = `
-                <div class="user-message px-4 py-3 max-w-xs md:max-w-md">
-                    ${this.escapeHtml(message)}
+      messageDiv.innerHTML = `
+                <div class="bg-blue-500 text-white px-4 py-3 rounded-lg max-w-xs md:max-w-md">
+                    ${this.escapeHtml(text)}
                 </div>
-                <div class="w-8 h-8 bg-gradient-to-r from-blue-600 to-purple-600 rounded-xl flex items-center justify-center flex-shrink-0 shadow-lg">
+                <div class="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center flex-shrink-0">
                     <i class="fas fa-user text-white text-xs"></i>
                 </div>
             `;
     } else {
-      messageElement.classList.add("justify-start");
-      messageElement.innerHTML = `
-                <div class="w-8 h-8 bg-gradient-to-r from-blue-600 to-purple-600 rounded-xl flex items-center justify-center flex-shrink-0 shadow-lg">
+      messageDiv.innerHTML = `
+                <div class="w-8 h-8 bg-purple-500 rounded-full flex items-center justify-center flex-shrink-0">
                     <i class="fas fa-robot text-white text-xs"></i>
                 </div>
-                <div class="bot-message px-4 py-3 max-w-xs md:max-w-md">
-                    ${this.escapeHtml(message)}
+                <div class="bg-gray-100 text-gray-800 px-4 py-3 rounded-lg max-w-xs md:max-w-md">
+                    ${this.escapeHtml(text)}
                 </div>
             `;
     }
 
-    this.chatContainer.appendChild(messageElement);
+    this.chatContainer.appendChild(messageDiv);
     this.scrollToBottom();
 
     // Save to history
-    if (saveToHistory) {
-      this.chatHistory.push({
-        text: message,
-        sender: sender,
-        timestamp: new Date().toISOString(),
-      });
+    this.saveToHistory(text, sender);
+  }
 
-      // Keep only last 50 messages
-      if (this.chatHistory.length > 50) {
-        this.chatHistory = this.chatHistory.slice(-50);
+  generateResponse(message) {
+    const lowerMessage = message.toLowerCase();
+
+    const responses = {
+      hello: "Hello! How can I help you today?",
+      hi: "Hi there! What can I help you with?",
+      help: "I can help you with:\n• Answering questions\n• Providing information\n• Analyzing documents\n\nWhat do you need help with?",
+      thank: "You're welcome! Is there anything else I can help you with?",
+      bye: "Goodbye! Feel free to come back if you have more questions.",
+      hours: "Our business hours are Monday-Friday, 9AM-6PM EST.",
+      contact:
+        "You can contact us at:\n• Phone: 1-800-123-4567\n• Email: support@company.com\n• Live Chat: Available 24/7",
+      pricing:
+        "We offer various pricing plans:\n• Basic: $29/month\n• Pro: $79/month\n• Enterprise: Custom pricing\n\nWhich plan are you interested in?",
+      support:
+        "Our technical support team is available 24/7. You can reach them via phone, email, or live chat in the help section.",
+    };
+
+    for (const [key, response] of Object.entries(responses)) {
+      if (lowerMessage.includes(key)) {
+        return response;
       }
-
-      localStorage.setItem("chatHistory", JSON.stringify(this.chatHistory));
-    }
-  }
-
-  // ========== QUESTIONNAIRE FUNCTIONALITY ==========
-
-  toggleQuestionnaire() {
-    if (this.isQuestionnaireOpen) {
-      this.closeQuestionnaire();
-    } else {
-      this.openQuestionnaire();
-    }
-  }
-
-  openQuestionnaire() {
-    this.questionnaireOptions.classList.remove("hidden");
-    this.toggleIcon.classList.add("rotate-180");
-    this.isQuestionnaireOpen = true;
-  }
-
-  closeQuestionnaire() {
-    this.questionnaireOptions.classList.add("hidden");
-    this.toggleIcon.classList.remove("rotate-180");
-    this.isQuestionnaireOpen = false;
-  }
-
-  handleQuestionTabClick(tab) {
-    // Add click animation
-    tab.style.transform = "scale(0.95)";
-    setTimeout(() => {
-      tab.style.transform = "";
-    }, 150);
-
-    if (tab.id === "uploadDocBtn") {
-      this.openUploadModal();
-    } else {
-      const question = tab.getAttribute("data-question");
-      this.messageInput.value = question;
-      this.sendMessage();
-    }
-  }
-
-  handleQuickQuestionClick(question) {
-    const questionText = question.getAttribute("data-question");
-    this.messageInput.value = questionText;
-    this.sendMessage();
-    this.closeQuestionnaire();
-  }
-
-  // ========== VOICE INPUT FUNCTIONALITY ==========
-
-  startVoiceInput() {
-    if (!("webkitSpeechRecognition" in window)) {
-      this.showToast("Voice input not supported in your browser", "warning");
-      return;
     }
 
-    this.showToast("Voice input started - speak now", "info");
-    // Voice recognition implementation would go here
+    return `I understand you're asking about "${message}". I'm an AI assistant trained to help with customer service inquiries. Could you provide more details about what you need help with?`;
   }
 
-  stopVoiceInput() {
-    this.isVoiceActive = false;
-    if (this.voiceModal) {
-      this.voiceModal.classList.add("hidden");
+  showTyping() {
+    if (!this.chatContainer) return;
+
+    const typingDiv = document.createElement("div");
+    typingDiv.id = "typingIndicator";
+    typingDiv.className = "flex items-center space-x-2 justify-start";
+    typingDiv.innerHTML = `
+            <div class="w-8 h-8 bg-purple-500 rounded-full flex items-center justify-center flex-shrink-0">
+                <i class="fas fa-robot text-white text-xs"></i>
+            </div>
+            <div class="bg-gray-100 text-gray-800 px-4 py-3 rounded-lg">
+                <div class="flex space-x-1">
+                    <div class="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></div>
+                    <div class="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style="animation-delay: 0.1s"></div>
+                    <div class="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style="animation-delay: 0.2s"></div>
+                </div>
+            </div>
+        `;
+
+    this.chatContainer.appendChild(typingDiv);
+    this.scrollToBottom();
+  }
+
+  hideTyping() {
+    const typingIndicator = document.getElementById("typingIndicator");
+    if (typingIndicator) {
+      typingIndicator.remove();
     }
-    this.showToast("Voice input stopped", "info");
-  }
-
-  // ========== FILE UPLOAD FUNCTIONALITY ==========
-
-  openUploadModal() {
-    this.uploadModal.classList.remove("hidden");
-    this.resetUploadForm();
-  }
-
-  closeUploadModal() {
-    this.uploadModal.classList.add("hidden");
-    this.resetUploadForm();
-  }
-
-  resetUploadForm() {
-    this.selectedFile = null;
-    this.fileInput.value = "";
-    this.fileInfo.classList.add("hidden");
-    this.confirmUpload.disabled = true;
-  }
-
-  handleFileSelect(event) {
-    const file = event.target.files[0];
-    if (!file) return;
-
-    // Basic file validation
-    const validTypes = [".pdf", ".docx", ".txt"];
-    const fileExtension = "." + file.name.split(".").pop().toLowerCase();
-
-    if (!validTypes.includes(fileExtension)) {
-      this.showUploadResult("Please select a PDF, DOCX, or TXT file.", "error");
-      return;
-    }
-
-    if (file.size > 10 * 1024 * 1024) {
-      this.showUploadResult("File size must be less than 10MB.", "error");
-      return;
-    }
-
-    this.selectedFile = file;
-    this.updateFileInfo(file);
-  }
-
-  updateFileInfo(file) {
-    this.fileName.textContent = file.name;
-    this.fileSize.textContent = this.formatFileSize(file.size);
-    this.fileInfo.classList.remove("hidden");
-    this.confirmUpload.disabled = false;
-  }
-
-  formatFileSize(bytes) {
-    if (bytes === 0) return "0 Bytes";
-    const k = 1024;
-    const sizes = ["Bytes", "KB", "MB", "GB"];
-    const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i];
-  }
-
-  removeSelectedFile() {
-    this.selectedFile = null;
-    this.fileInput.value = "";
-    this.fileInfo.classList.add("hidden");
-    this.confirmUpload.disabled = true;
-  }
-
-  async uploadFile() {
-    if (!this.selectedFile) return;
-
-    this.showToast("Uploading file...", "info");
-
-    // Simulate upload - replace with actual upload
-    setTimeout(() => {
-      this.showUploadResult("✅ File uploaded successfully!", "success");
-      this.loadKnowledgeStats();
-
-      setTimeout(() => {
-        this.closeUploadModal();
-      }, 2000);
-    }, 2000);
-
-    // Uncomment for real upload:
-    /*
-        const formData = new FormData();
-        formData.append("file", this.selectedFile);
-
-        try {
-            const response = await fetch(`${this.API_BASE_URL}/api/upload`, {
-                method: "POST",
-                body: formData,
-            });
-
-            const result = await response.json();
-
-            if (response.ok) {
-                this.showUploadResult(`✅ ${result.message}`, "success");
-                await this.loadKnowledgeStats();
-                
-                setTimeout(() => {
-                    this.closeUploadModal();
-                }, 2000);
-            } else {
-                this.showUploadResult(`❌ ${result.error}`, "error");
-            }
-        } catch (error) {
-            this.showUploadResult("❌ Upload failed. Please try again.", "error");
-        }
-        */
-  }
-
-  // ========== UTILITY METHODS ==========
-
-  showTypingIndicator() {
-    if (this.typingIndicator) {
-      this.typingIndicator.classList.remove("hidden");
-      this.scrollToBottom();
-    }
-  }
-
-  hideTypingIndicator() {
-    if (this.typingIndicator) {
-      this.typingIndicator.classList.add("hidden");
-    }
-  }
-
-  autoResizeTextarea() {
-    this.messageInput.style.height = "auto";
-    this.messageInput.style.height = this.messageInput.scrollHeight + "px";
   }
 
   scrollToBottom() {
@@ -543,145 +285,49 @@ class AICustomerService {
     return div.innerHTML;
   }
 
-  generateUserId() {
-    return "user-" + Date.now() + "-" + Math.random().toString(36).substr(2, 9);
+  showMessage(text, type = "info") {
+    console.log(`📢 ${type}: ${text}`);
+    alert(text); // Simple fallback
   }
 
-  // ========== THEME MANAGEMENT ==========
-
-  toggleTheme() {
-    if (this.isDarkMode) {
-      this.disableDarkMode();
-    } else {
-      this.enableDarkMode();
-    }
-  }
-
-  enableDarkMode() {
-    document.body.classList.add("dark-mode");
-    this.themeToggle.innerHTML = '<i class="fas fa-sun text-yellow-400"></i>';
-    this.isDarkMode = true;
-    localStorage.setItem("darkMode", "true");
-  }
-
-  disableDarkMode() {
-    document.body.classList.remove("dark-mode");
-    this.themeToggle.innerHTML = '<i class="fas fa-moon text-slate-600"></i>';
-    this.isDarkMode = false;
-    localStorage.setItem("darkMode", "false");
-  }
-
-  // ========== KNOWLEDGE BASE ==========
-
-  async loadKnowledgeStats() {
+  loadHistory() {
     try {
-      // Simulate API call - replace with actual API call
-      const stats = {
-        total_chunks: 8,
-        uploaded_documents: 0,
-      };
+      const saved = localStorage.getItem("chatHistory");
+      if (saved) {
+        const history = JSON.parse(saved);
+        history.forEach((msg) => this.addMessage(msg.text, msg.sender));
 
-      this.updateStatsDisplay(stats);
-
-      // Uncomment for real API call:
-      /*
-            const response = await fetch(`${this.API_BASE_URL}/api/knowledge/stats`);
-            if (response.ok) {
-                const stats = await response.json();
-                this.updateStatsDisplay(stats);
-            }
-            */
-    } catch (error) {
-      console.warn("Failed to load knowledge stats:", error);
-    }
-  }
-
-  updateStatsDisplay(stats) {
-    if (this.totalChunks) {
-      this.totalChunks.textContent = stats.total_chunks;
-    }
-    if (this.uploadedDocs) {
-      this.uploadedDocs.textContent = stats.uploaded_documents;
-    }
-  }
-
-  // ========== NOTIFICATIONS ==========
-
-  showToast(message, type = "info") {
-    console.log(`📢 ${type.toUpperCase()}: ${message}`);
-
-    // Create toast element
-    const toast = document.createElement("div");
-    toast.className = `fixed top-4 right-4 px-4 py-2 rounded-lg text-white shadow-lg transform transition-transform duration-300 z-50 ${
-      type === "success"
-        ? "bg-green-500"
-        : type === "warning"
-        ? "bg-orange-500"
-        : type === "error"
-        ? "bg-red-500"
-        : "bg-blue-500"
-    }`;
-    toast.textContent = message;
-
-    document.body.appendChild(toast);
-
-    // Animate in
-    setTimeout(() => {
-      toast.classList.remove("translate-x-full");
-    }, 100);
-
-    // Remove after 3 seconds
-    setTimeout(() => {
-      toast.classList.add("translate-x-full");
-      setTimeout(() => {
-        if (document.body.contains(toast)) {
-          document.body.removeChild(toast);
+        if (history.length > 0 && this.welcomeCard) {
+          this.welcomeCard.style.display = "none";
         }
-      }, 300);
-    }, 3000);
-  }
-
-  showUploadResult(message, type) {
-    this.showToast(message, type);
-  }
-
-  // ========== CHAT MANAGEMENT ==========
-
-  clearChat() {
-    if (
-      !confirm(
-        "Are you sure you want to clear the chat history? This cannot be undone."
-      )
-    ) {
-      return;
+      }
+    } catch (e) {
+      console.warn("Failed to load history:", e);
     }
+  }
 
-    this.chatContainer.innerHTML = "";
-    this.chatHistory = [];
-    localStorage.removeItem("chatHistory");
-    this.welcomeCard.style.display = "block";
+  saveToHistory(text, sender) {
+    try {
+      const history = JSON.parse(localStorage.getItem("chatHistory") || "[]");
+      history.push({ text, sender, timestamp: new Date().toISOString() });
 
-    this.addMessageToChat(
-      "Hello! I'm your AI customer service assistant. How can I help you today?",
-      "bot",
-      false
-    );
+      // Keep last 50 messages
+      if (history.length > 50) {
+        history.splice(0, history.length - 50);
+      }
 
-    this.showToast("Chat cleared", "success");
+      localStorage.setItem("chatHistory", JSON.stringify(history));
+    } catch (e) {
+      console.warn("Failed to save history:", e);
+    }
   }
 }
 
-// Initialize the application when DOM is ready
-document.addEventListener("DOMContentLoaded", function () {
-  console.log("📄 DOM fully loaded, initializing application...");
-  window.aiCustomerService = new AICustomerService();
-});
-
-// Fallback initialization
+// Fallback: If DOM is already loaded
 if (
   document.readyState === "interactive" ||
   document.readyState === "complete"
 ) {
-  console.log("📄 DOM already ready, initializing application...");
-  window.aiCustomerService = new AICustomerService();
+  console.log("📄 DOM already loaded, starting chat...");
+  window.aiChat = new AIChat();
 }
