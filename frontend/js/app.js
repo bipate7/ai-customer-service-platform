@@ -1,79 +1,504 @@
-// AI Customer Service Platform - Phase 5: Enhanced Features
+// AI Customer Service Platform - Complete Production Version
 
+// Configuration Manager
+class ConfigManager {
+  constructor() {
+    this.config = {
+      API_BASE_URL: "https://ai-customer-service-backend-rthi.onrender.com",
+      ENVIRONMENT: this.getEnvironment(),
+      VERSION: "1.0.0",
+      FEATURES: {
+        VOICE_INPUT: true,
+        FILE_UPLOAD: true,
+        ANALYTICS: true,
+      },
+      PERFORMANCE: {
+        REQUEST_TIMEOUT: 10000,
+        MAX_RETRIES: 3,
+        TYPING_INDICATOR_DELAY: 1000,
+      },
+      SECURITY: {
+        MAX_FILE_SIZE: 10 * 1024 * 1024,
+        ALLOWED_FILE_TYPES: [".pdf", ".docx", ".txt", ".md", ".csv"],
+      },
+      UI: {
+        THEME: this.getStoredTheme(),
+        AUTO_SAVE: true,
+      },
+      CHAT: {
+        MAX_MESSAGE_LENGTH: 1000,
+        MAX_HISTORY_LENGTH: 50,
+      },
+    };
+  }
+
+  getEnvironment() {
+    const hostname = window.location.hostname;
+    if (hostname === "localhost" || hostname === "127.0.0.1") {
+      return "development";
+    }
+    return "production";
+  }
+
+  getStoredTheme() {
+    return localStorage.getItem("app_theme") || "light";
+  }
+
+  getConfig() {
+    return this.config;
+  }
+
+  validateFile(file) {
+    const errors = [];
+
+    if (file.size > this.config.SECURITY.MAX_FILE_SIZE) {
+      errors.push(
+        `File size must be less than ${
+          this.config.SECURITY.MAX_FILE_SIZE / 1024 / 1024
+        }MB`
+      );
+    }
+
+    const fileExtension = "." + file.name.split(".").pop().toLowerCase();
+    if (!this.config.SECURITY.ALLOWED_FILE_TYPES.includes(fileExtension)) {
+      errors.push(
+        `File type not supported. Allowed types: ${this.config.SECURITY.ALLOWED_FILE_TYPES.join(
+          ", "
+        )}`
+      );
+    }
+
+    return {
+      isValid: errors.length === 0,
+      errors,
+    };
+  }
+
+  validateMessage(message) {
+    return message.length <= this.config.CHAT.MAX_MESSAGE_LENGTH;
+  }
+}
+
+// Error Handler
+class ErrorHandler {
+  constructor() {
+    this.initializeErrorHandling();
+  }
+
+  initializeErrorHandling() {
+    window.addEventListener("error", (event) => {
+      this.logError("Global Error", {
+        message: event.message,
+        filename: event.filename,
+        lineno: event.lineno,
+        colno: event.colno,
+        error: event.error,
+      });
+    });
+
+    window.addEventListener("unhandledrejection", (event) => {
+      this.logError("Unhandled Promise Rejection", {
+        reason: event.reason,
+        promise: event.promise,
+      });
+    });
+  }
+
+  logError(type, data) {
+    const errorData = {
+      type,
+      ...data,
+      userAgent: navigator.userAgent,
+      timestamp: new Date().toISOString(),
+      url: window.location.href,
+    };
+
+    console.error(`[${type}]`, errorData);
+
+    if (window.appConfig?.getConfig().ENVIRONMENT === "production") {
+      this.sendToLoggingService(errorData).catch(console.error);
+    }
+  }
+
+  async sendToLoggingService(data) {
+    try {
+      await fetch(`${window.appConfig.getConfig().API_BASE_URL}/api/logs`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      });
+    } catch (error) {
+      console.warn("Logging service unavailable:", error);
+    }
+  }
+
+  handleAPIError(error, context) {
+    const errorMap = {
+      "Failed to fetch": {
+        userMessage:
+          "Network connection failed. Please check your internet connection.",
+        action: "retry",
+      },
+      AbortError: {
+        userMessage: "Request timed out. Please try again.",
+        action: "retry",
+      },
+      404: {
+        userMessage: "The requested resource was not found.",
+        action: "contact_support",
+      },
+      500: {
+        userMessage: "Server error. Our team has been notified.",
+        action: "contact_support",
+      },
+    };
+
+    const errorInfo = errorMap[error.message] ||
+      errorMap[error.name] || {
+        userMessage: "An unexpected error occurred. Please try again.",
+        action: "retry",
+      };
+
+    this.logError("API Error", {
+      context,
+      error: error.message,
+      userMessage: errorInfo.userMessage,
+      action: errorInfo.action,
+    });
+
+    return errorInfo;
+  }
+}
+
+// API Service
+class APIService {
+  constructor() {
+    this.config = window.appConfig.getConfig();
+    this.errorHandler = new ErrorHandler();
+  }
+
+  async makeRequest(
+    endpoint,
+    options = {},
+    retries = this.config.PERFORMANCE.MAX_RETRIES
+  ) {
+    const url = `${this.config.API_BASE_URL}${endpoint}`;
+    const controller = new AbortController();
+    const timeoutId = setTimeout(
+      () => controller.abort(),
+      this.config.PERFORMANCE.REQUEST_TIMEOUT
+    );
+
+    try {
+      const response = await fetch(url, {
+        ...options,
+        signal: controller.signal,
+        headers: {
+          "Content-Type": "application/json",
+          "X-User-ID": window.aiCustomerService?.currentUser || "anonymous",
+          "X-Client-Version": this.config.VERSION,
+          ...options.headers,
+        },
+      });
+
+      clearTimeout(timeoutId);
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+
+      return await response.json();
+    } catch (error) {
+      clearTimeout(timeoutId);
+
+      if (retries > 0 && this.shouldRetry(error)) {
+        console.log(`Retrying request... ${retries} attempts left`);
+        await this.delay(this.getRetryDelay(retries));
+        return this.makeRequest(endpoint, options, retries - 1);
+      }
+
+      const errorInfo = this.errorHandler.handleAPIError(error, endpoint);
+      throw new Error(errorInfo.userMessage);
+    }
+  }
+
+  shouldRetry(error) {
+    return (
+      error.name === "AbortError" ||
+      error.message.includes("Failed to fetch") ||
+      error.message.includes("500")
+    );
+  }
+
+  getRetryDelay(retryCount) {
+    return Math.min(
+      1000 * Math.pow(2, this.config.PERFORMANCE.MAX_RETRIES - retryCount),
+      10000
+    );
+  }
+
+  delay(ms) {
+    return new Promise((resolve) => setTimeout(resolve, ms));
+  }
+
+  async chat(message, context = []) {
+    return this.makeRequest("/api/chat", {
+      method: "POST",
+      body: JSON.stringify({
+        message,
+        userId: window.aiCustomerService?.currentUser,
+        conversationContext: context,
+        timestamp: new Date().toISOString(),
+      }),
+    });
+  }
+
+  async uploadFile(formData) {
+    return this.makeRequest("/api/upload", {
+      method: "POST",
+      body: formData,
+    });
+  }
+
+  async getKnowledgeStats() {
+    return this.makeRequest("/api/knowledge/stats");
+  }
+
+  async healthCheck() {
+    return this.makeRequest("/api/health", {
+      method: "GET",
+    });
+  }
+}
+
+// Performance Monitor
+class PerformanceMonitor {
+  constructor() {
+    this.metrics = {
+      pageLoadTime: 0,
+      apiResponseTimes: [],
+      userInteractions: [],
+      errors: [],
+    };
+
+    this.initializeMonitoring();
+  }
+
+  initializeMonitoring() {
+    window.addEventListener("load", () => {
+      this.metrics.pageLoadTime = performance.now();
+      this.reportMetric("page_load", this.metrics.pageLoadTime);
+    });
+
+    document.addEventListener("click", (event) => {
+      this.trackInteraction("click", event.target);
+    });
+
+    document.addEventListener("visibilitychange", () => {
+      this.reportMetric("visibility_change", {
+        hidden: document.hidden,
+        timestamp: Date.now(),
+      });
+    });
+
+    setInterval(() => this.performHealthCheck(), 30000);
+  }
+
+  trackAPICall(endpoint, duration, success = true) {
+    const metric = {
+      endpoint,
+      duration,
+      success,
+      timestamp: Date.now(),
+    };
+
+    this.metrics.apiResponseTimes.push(metric);
+
+    if (duration > 5000) {
+      this.reportMetric("slow_api_call", metric);
+    }
+  }
+
+  trackInteraction(type, element) {
+    const interaction = {
+      type,
+      element: element.tagName,
+      id: element.id || null,
+      classes: element.className || null,
+      timestamp: Date.now(),
+    };
+
+    this.metrics.userInteractions.push(interaction);
+
+    if (this.metrics.userInteractions.length > 100) {
+      this.metrics.userInteractions.shift();
+    }
+  }
+
+  async performHealthCheck() {
+    try {
+      const startTime = performance.now();
+      const response = await fetch(
+        `${window.appConfig.getConfig().API_BASE_URL}/api/health`
+      );
+      const duration = performance.now() - startTime;
+
+      this.trackAPICall("/api/health", duration, response.ok);
+
+      if (!response.ok) {
+        this.reportMetric("health_check_failed", {
+          status: response.status,
+          duration,
+        });
+      }
+    } catch (error) {
+      this.reportMetric("health_check_error", {
+        error: error.message,
+      });
+    }
+  }
+
+  reportMetric(type, data) {
+    const metricData = {
+      type,
+      data,
+      userAgent: navigator.userAgent,
+      timestamp: new Date().toISOString(),
+      sessionId: window.aiCustomerService?.currentUser,
+    };
+
+    if (window.appConfig.getConfig().ENVIRONMENT === "production") {
+      this.sendToAnalytics(metricData).catch(console.error);
+    }
+
+    console.log(`[Metric] ${type}:`, metricData);
+  }
+
+  async sendToAnalytics(data) {
+    try {
+      await fetch(
+        `${window.appConfig.getConfig().API_BASE_URL}/api/analytics`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(data),
+        }
+      );
+    } catch (error) {
+      console.warn("Analytics service unavailable:", error);
+    }
+  }
+
+  getPerformanceReport() {
+    const avgResponseTime =
+      this.metrics.apiResponseTimes.length > 0
+        ? this.metrics.apiResponseTimes.reduce(
+            (sum, metric) => sum + metric.duration,
+            0
+          ) / this.metrics.apiResponseTimes.length
+        : 0;
+
+    return {
+      pageLoadTime: this.metrics.pageLoadTime,
+      averageResponseTime: avgResponseTime,
+      totalInteractions: this.metrics.userInteractions.length,
+      totalAPICalls: this.metrics.apiResponseTimes.length,
+      errorCount: this.metrics.errors.length,
+    };
+  }
+}
+
+// Main Application Class
 class AICustomerService {
   constructor() {
+    // Initialize configuration first
+    window.appConfig = new ConfigManager();
+    window.APP_CONFIG = window.appConfig.getConfig();
+
+    // Initialize services
+    this.errorHandler = new ErrorHandler();
+    this.apiService = new APIService();
+    this.performanceMonitor = new PerformanceMonitor();
+
     this.initializeApp();
   }
 
   async initializeApp() {
-    // DOM Elements
-    this.chatContainer = document.getElementById("chatContainer");
-    this.messageInput = document.getElementById("messageInput");
-    this.sendButton = document.getElementById("sendButton");
-    this.clearChatButton = document.getElementById("clearChat");
-    this.themeToggle = document.getElementById("themeToggle");
-    this.typingIndicator = document.getElementById("typingIndicator");
-    this.welcomeCard = document.getElementById("welcomeCard");
-    this.questionnaireToggle = document.getElementById("questionnaireToggle");
-    this.questionnaireOptions = document.getElementById("questionnaireOptions");
-    this.toggleIcon = document.getElementById("toggleIcon");
-    this.voiceToggle = document.getElementById("voiceToggle");
-    this.voiceInputBtn = document.getElementById("voiceInputBtn");
-    this.voiceModal = document.getElementById("voiceModal");
-    this.stopVoice = document.getElementById("stopVoice");
-    this.voiceStatus = document.getElementById("voiceStatus");
-    this.voiceIndicator = document.getElementById("voiceIndicator");
-    this.copyChat = document.getElementById("copyChat");
-    this.refreshStats = document.getElementById("refreshStats");
-    this.charCounter = document.getElementById("charCounter");
-    this.charCount = document.getElementById("charCount");
-    this.connectionStatus = document.getElementById("connectionStatus");
-    this.responseTime = document.getElementById("responseTime");
-    this.searchCount = document.getElementById("searchCount");
+    try {
+      // Perform initial health check
+      await this.apiService.healthCheck();
 
-    // File Upload Elements
-    this.uploadBtn = document.getElementById("uploadBtn");
-    this.uploadModal = document.getElementById("uploadModal");
-    this.closeModal = document.getElementById("closeModal");
-    this.cancelUpload = document.getElementById("cancelUpload");
-    this.fileInput = document.getElementById("fileInput");
-    this.browseBtn = document.getElementById("browseBtn");
-    this.fileInfo = document.getElementById("fileInfo");
-    this.fileName = document.getElementById("fileName");
-    this.fileSize = document.getElementById("fileSize");
-    this.removeFile = document.getElementById("removeFile");
-    this.confirmUpload = document.getElementById("confirmUpload");
-    this.uploadProgress = document.getElementById("uploadProgress");
-    this.progressBar = document.getElementById("progressBar");
-    this.progressPercent = document.getElementById("progressPercent");
-    this.uploadResult = document.getElementById("uploadResult");
+      // Initialize the rest of the application
+      await this.setupDOM();
+      this.initializeEventListeners();
+      this.initializeVoiceRecognition();
+      this.initializePerformanceMonitoring();
 
-    // Knowledge Stats Elements
-    this.totalChunks = document.getElementById("totalChunks");
-    this.baseChunks = document.getElementById("baseChunks");
-    this.uploadedDocs = document.getElementById("uploadedDocs");
-    this.totalDocs = document.getElementById("totalDocs");
+      // Load initial data
+      await this.loadInitialData();
 
-    // State
-    this.isDarkMode = false;
-    this.chatHistory = [];
-    this.currentUser = null;
-    this.selectedFile = null;
-    this.isQuestionnaireOpen = false;
-    this.isVoiceActive = false;
-    this.recognition = null;
-    this.searchCountValue = 0;
-    this.isOnline = true;
-
-    // API Configuration
-    this.API_BASE_URL = "https://ai-customer-service-backend-rthi.onrender.com";
-
-    await this.initializeChat();
-    this.initializeEventListeners();
-    this.initializeVoiceRecognition();
-    this.initializePerformanceMonitoring();
+      console.log("🚀 AI Customer Service Platform initialized successfully");
+    } catch (error) {
+      console.error("Failed to initialize application:", error);
+      this.errorHandler.logError("App Initialization Failed", {
+        error: error.message,
+      });
+    }
   }
 
+  setupDOM() {
+    return new Promise((resolve) => {
+      if (document.readyState === "loading") {
+        document.addEventListener("DOMContentLoaded", () => resolve());
+      } else {
+        resolve();
+      }
+    });
+  }
+
+  async loadInitialData() {
+    try {
+      const [stats, userPreferences] = await Promise.all([
+        this.apiService.getKnowledgeStats(),
+        this.loadUserPreferences(),
+      ]);
+
+      this.updateStatsDisplay(stats);
+      this.applyUserPreferences(userPreferences);
+    } catch (error) {
+      console.warn("Failed to load initial data:", error);
+    }
+  }
+
+  loadUserPreferences() {
+    return new Promise((resolve) => {
+      try {
+        const preferences = {
+          theme: localStorage.getItem("theme") || "light",
+          language: localStorage.getItem("language") || "en",
+          autoSave: localStorage.getItem("autoSave") !== "false",
+          notifications: localStorage.getItem("notifications") !== "false",
+        };
+        resolve(preferences);
+      } catch (error) {
+        console.warn("Failed to load user preferences:", error);
+        resolve({
+          theme: "light",
+          language: "en",
+          autoSave: true,
+          notifications: true,
+        });
+      }
+    });
+  }
+
+  applyUserPreferences(preferences) {
+    if (preferences.theme === "dark") {
+      this.enableDarkMode();
+    }
+  }
+
+  // DOM Elements and State Initialization
   async initializeChat() {
     // Initialize user
     this.currentUser = localStorage.getItem("userId") || this.generateUserId();
@@ -273,6 +698,17 @@ class AICustomerService {
 
     if (message === "") return;
 
+    // Validate message length
+    if (!window.appConfig.validateMessage(message)) {
+      this.showToast(
+        `Message too long. Maximum ${
+          window.appConfig.getConfig().CHAT.MAX_MESSAGE_LENGTH
+        } characters allowed.`,
+        "error"
+      );
+      return;
+    }
+
     // Increment search count
     this.incrementSearchCount();
 
@@ -300,13 +736,16 @@ class AICustomerService {
 
     try {
       // Get AI response from backend
-      const botResponse = await this.sendMessageToAPI(message);
+      const botResponse = await this.apiService.chat(
+        message,
+        this.chatHistory.slice(-4)
+      );
       const endTime = performance.now();
       const responseTime = endTime - startTime;
 
       this.updatePerformanceMetrics(responseTime);
       this.hideTypingIndicator();
-      await this.addMessageToChat(botResponse, "bot");
+      await this.addMessageToChat(botResponse.response, "bot");
     } catch (error) {
       this.hideTypingIndicator();
       console.error("Error getting AI response:", error);
@@ -328,23 +767,23 @@ class AICustomerService {
     if (sender === "user") {
       messageElement.classList.add("justify-end");
       messageElement.innerHTML = `
-        <div class="user-message px-4 py-3 max-w-xs md:max-w-md">
-          ${this.escapeHtml(message)}
-        </div>
-        <div class="w-8 h-8 bg-gradient-to-r from-blue-600 to-purple-600 rounded-xl flex items-center justify-center flex-shrink-0 shadow-lg">
-          <i class="fas fa-user text-white text-xs"></i>
-        </div>
-      `;
+                <div class="user-message px-4 py-3 max-w-xs md:max-w-md">
+                    ${this.escapeHtml(message)}
+                </div>
+                <div class="w-8 h-8 bg-gradient-to-r from-blue-600 to-purple-600 rounded-xl flex items-center justify-center flex-shrink-0 shadow-lg">
+                    <i class="fas fa-user text-white text-xs"></i>
+                </div>
+            `;
     } else {
       messageElement.classList.add("justify-start");
       messageElement.innerHTML = `
-        <div class="w-8 h-8 bg-gradient-to-r from-blue-600 to-purple-600 rounded-xl flex items-center justify-center flex-shrink-0 shadow-lg">
-          <i class="fas fa-robot text-white text-xs"></i>
-        </div>
-        <div class="bot-message px-4 py-3 max-w-xs md:max-w-md">
-          ${this.formatBotResponse(message)}
-        </div>
-      `;
+                <div class="w-8 h-8 bg-gradient-to-r from-blue-600 to-purple-600 rounded-xl flex items-center justify-center flex-shrink-0 shadow-lg">
+                    <i class="fas fa-robot text-white text-xs"></i>
+                </div>
+                <div class="bot-message px-4 py-3 max-w-xs md:max-w-md">
+                    ${this.formatBotResponse(message)}
+                </div>
+            `;
     }
 
     this.chatContainer.appendChild(messageElement);
@@ -363,6 +802,17 @@ class AICustomerService {
       };
 
       this.chatHistory.push(messageData);
+
+      // Keep only last 50 messages
+      if (
+        this.chatHistory.length >
+        window.appConfig.getConfig().CHAT.MAX_HISTORY_LENGTH
+      ) {
+        this.chatHistory = this.chatHistory.slice(
+          -window.appConfig.getConfig().CHAT.MAX_HISTORY_LENGTH
+        );
+      }
+
       localStorage.setItem("chatHistory", JSON.stringify(this.chatHistory));
     }
   }
@@ -488,12 +938,8 @@ class AICustomerService {
   // Connection Management
   async checkConnectionStatus() {
     try {
-      const response = await fetch(`${this.API_BASE_URL}/api/health`, {
-        method: "GET",
-        timeout: 5000,
-      });
-
-      this.isOnline = response.ok;
+      const response = await this.apiService.healthCheck();
+      this.isOnline = true;
       this.updateConnectionStatus();
     } catch (error) {
       this.isOnline = false;
@@ -589,55 +1035,12 @@ class AICustomerService {
     return "I'm having trouble connecting right now. Please try again in a moment.";
   }
 
-  // ... (Previous methods for questionnaire, file upload, theme toggle, etc. remain the same)
-  // These would be carried over from previous phases with minor enhancements
-
   // API Integration
-  async sendMessageToAPI(message) {
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 10000);
-
-    try {
-      const response = await fetch(`${this.API_BASE_URL}/api/chat`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          message: message,
-          userId: this.currentUser,
-          conversationContext: this.chatHistory.slice(-4),
-        }),
-        signal: controller.signal,
-      });
-
-      clearTimeout(timeoutId);
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      const data = await response.json();
-
-      if (data.status === "success") {
-        return data.response;
-      } else {
-        throw new Error(data.error || "Unknown error occurred");
-      }
-    } catch (error) {
-      clearTimeout(timeoutId);
-      throw error;
-    }
-  }
-
   async loadKnowledgeStats() {
     try {
-      const response = await fetch(`${this.API_BASE_URL}/api/knowledge/stats`);
-      if (response.ok) {
-        const stats = await response.json();
-        this.updateStatsDisplay(stats);
-        this.showToast("Stats updated", "success");
-      }
+      const stats = await this.apiService.getKnowledgeStats();
+      this.updateStatsDisplay(stats);
+      this.showToast("Stats updated", "success");
     } catch (error) {
       console.error("Error loading knowledge stats:", error);
       this.showToast("Failed to load stats", "error");
@@ -735,7 +1138,7 @@ class AICustomerService {
     localStorage.setItem("darkMode", "false");
   }
 
-  // File upload methods (existing implementation)
+  // File upload methods
   openUploadModal() {
     this.uploadModal.classList.remove("hidden");
     this.resetUploadForm();
@@ -760,19 +1163,10 @@ class AICustomerService {
   handleFileSelect(event) {
     const file = event.target.files[0];
     if (file) {
-      const validTypes = [".pdf", ".docx", ".txt", ".md", ".csv"];
-      const fileExtension = "." + file.name.split(".").pop().toLowerCase();
-
-      if (!validTypes.includes(fileExtension)) {
-        this.showUploadResult(
-          "Please select a PDF, DOCX, TXT, MD, or CSV file.",
-          "error"
-        );
-        return;
-      }
-
-      if (file.size > 10 * 1024 * 1024) {
-        this.showUploadResult("File size must be less than 10MB.", "error");
+      // Use config validation
+      const validation = window.appConfig.validateFile(file);
+      if (!validation.isValid) {
+        validation.errors.forEach((error) => this.showToast(error, "error"));
         return;
       }
 
@@ -813,26 +1207,13 @@ class AICustomerService {
     this.confirmUpload.disabled = true;
 
     try {
-      const response = await fetch(`${this.API_BASE_URL}/api/upload`, {
-        method: "POST",
-        body: formData,
-      });
+      const result = await this.apiService.uploadFile(formData);
+      this.showUploadResult(`✅ ${result.message}`, "success");
+      await this.loadKnowledgeStats();
 
-      this.simulateUploadProgress();
-
-      const result = await response.json();
-
-      if (response.ok) {
-        this.showUploadResult(`✅ ${result.message}`, "success");
-        await this.loadKnowledgeStats();
-
-        setTimeout(() => {
-          this.closeUploadModal();
-        }, 2000);
-      } else {
-        this.showUploadResult(`❌ ${result.error}`, "error");
-        this.confirmUpload.disabled = false;
-      }
+      setTimeout(() => {
+        this.closeUploadModal();
+      }, 2000);
     } catch (error) {
       console.error("Upload error:", error);
       this.showUploadResult("❌ Upload failed. Please try again.", "error");
