@@ -16,41 +16,46 @@
     <link rel="stylesheet" href="styles/style.css" />
   </head>
   <body
-    class="font-inter bg-gradient-to-br from-blue-50 to-indigo-100 min-h-screen"
+    class="font-inter bg-gradient-to-br from-slate-50 to-blue-50 min-h-screen"
   >
     <!-- Header -->
-    <header class="bg-white shadow-sm">
+    <header
+      class="bg-white/80 backdrop-blur-md border-b border-slate-200 sticky top-0 z-40"
+    >
       <div
-        class="container mx-auto px-4 py-4 flex justify-between items-center"
+        class="container mx-auto px-4 py-3 flex justify-between items-center"
       >
         <div class="flex items-center space-x-3">
           <div
-            class="w-10 h-10 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-lg flex items-center justify-center"
+            class="w-9 h-9 bg-gradient-to-r from-blue-600 to-purple-600 rounded-xl flex items-center justify-center shadow-lg"
           >
-            <i class="fas fa-robot text-white text-lg"></i>
+            <i class="fas fa-robot text-white text-sm"></i>
           </div>
-          <h1 class="text-xl font-bold text-gray-800">AI Customer Support</h1>
+          <div>
+            <h1 class="text-lg font-bold text-slate-800">AI Support</h1>
+            <p class="text-xs text-slate-500">Always available</p>
+          </div>
         </div>
-        <div class="flex items-center space-x-4">
+        <div class="flex items-center space-x-3">
           <button
             id="themeToggle"
-            class="p-2 rounded-full hover:bg-gray-100 transition-colors"
+            class="p-2 rounded-xl hover:bg-slate-100 transition-all duration-200"
           >
-            <i class="fas fa-moon text-gray-600"></i>
+            <i class="fas fa-moon text-slate-600"></i>
           </button>
           <button
             id="uploadBtn"
-            class="px-4 py-2 bg-green-500 hover:bg-green-600 text-white rounded-lg transition-colors flex items-center space-x-2"
+            class="px-4 py-2 bg-gradient-to-r from-emerald-500 to-green-500 hover:from-emerald-600 hover:to-green-600 text-white rounded-xl transition-all duration-200 flex items-center space-x-2 shadow-lg hover:shadow-xl"
           >
             <i class="fas fa-upload"></i>
-            <span>Upload Docs</span>
+            <span class="hidden sm:inline">Upload Docs</span>
           </button>
           <button
             id="clearChat"
-            class="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition-colors flex items-center space-x-2"
+            class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl transition-all duration-200 flex items-center space-x-2"
           >
             <i class="fas fa-trash-alt"></i>
-            <span>Clear Chat</span>
+            <span class="hidden sm:inline">Clear</span>
           </button>
         </div>
       </div>
@@ -59,22 +64,27 @@
     <!-- Upload Modal -->
     <div
       id="uploadModal"
-      class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50"
+      class="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center hidden z-50"
     >
-      <div class="bg-white rounded-2xl shadow-xl p-6 w-full max-w-md mx-4">
+      <div
+        class="bg-white rounded-2xl shadow-2xl p-6 w-full max-w-md mx-4 border border-slate-200"
+      >
         <div class="flex justify-between items-center mb-4">
-          <h3 class="text-lg font-semibold text-gray-800">Upload Document</h3>
-          <button id="closeModal" class="text-gray-500 hover:text-gray-700">
+          <h3 class="text-lg font-semibold text-slate-800">Upload Document</h3>
+          <button
+            id="closeModal"
+            class="text-slate-500 hover:text-slate-700 transition-colors"
+          >
             <i class="fas fa-times text-xl"></i>
           </button>
         </div>
 
         <div
-          class="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center mb-4"
+          class="border-2 border-dashed border-slate-300 rounded-xl p-6 text-center mb-4 bg-slate-50/50"
         >
-          <i class="fas fa-cloud-upload-alt text-4xl text-gray-400 mb-3"></i>
-          <p class="text-gray-600 mb-2">Drag & drop your document here</p>
-          <p class="text-sm text-gray-500 mb-4">or</p>
+          <i class="fas fa-cloud-upload-alt text-4xl text-slate-400 mb-3"></i>
+          <p class="text-slate-600 mb-2">Drag & drop your document here</p>
+          <p class="text-sm text-slate-500 mb-4">or</p>
           <input
             type="file"
             id="fileInput"
@@ -83,22 +93,28 @@
           />
           <button
             id="browseBtn"
-            class="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition-colors"
+            class="px-4 py-2 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white rounded-xl transition-all duration-200 shadow-lg hover:shadow-xl"
           >
             Browse Files
           </button>
-          <p class="text-xs text-gray-500 mt-3">
+          <p class="text-xs text-slate-500 mt-3">
             Supported: PDF, DOCX, TXT (Max: 10MB)
           </p>
         </div>
 
-        <div id="fileInfo" class="hidden mb-4 p-3 bg-blue-50 rounded-lg">
+        <div
+          id="fileInfo"
+          class="hidden mb-4 p-3 bg-blue-50 rounded-lg border border-blue-200"
+        >
           <div class="flex justify-between items-center">
             <div>
               <p class="font-medium text-blue-800" id="fileName"></p>
               <p class="text-sm text-blue-600" id="fileSize"></p>
             </div>
-            <button id="removeFile" class="text-blue-500 hover:text-blue-700">
+            <button
+              id="removeFile"
+              class="text-blue-500 hover:text-blue-700 transition-colors"
+            >
               <i class="fas fa-times"></i>
             </button>
           </div>
@@ -107,13 +123,13 @@
         <div class="flex space-x-3">
           <button
             id="cancelUpload"
-            class="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+            class="flex-1 px-4 py-2 border border-slate-300 text-slate-700 rounded-xl hover:bg-slate-50 transition-all duration-200"
           >
             Cancel
           </button>
           <button
             id="confirmUpload"
-            class="flex-1 px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            class="flex-1 px-4 py-2 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white rounded-xl transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg hover:shadow-xl"
             disabled
           >
             <i class="fas fa-upload mr-2"></i>
@@ -122,14 +138,14 @@
         </div>
 
         <div id="uploadProgress" class="hidden mt-4">
-          <div class="flex justify-between text-sm text-gray-600 mb-1">
+          <div class="flex justify-between text-sm text-slate-600 mb-1">
             <span>Uploading...</span>
             <span id="progressPercent">0%</span>
           </div>
-          <div class="w-full bg-gray-200 rounded-full h-2">
+          <div class="w-full bg-slate-200 rounded-full h-2">
             <div
               id="progressBar"
-              class="bg-blue-500 h-2 rounded-full transition-all duration-300"
+              class="bg-gradient-to-r from-blue-500 to-blue-600 h-2 rounded-full transition-all duration-300"
               style="width: 0%"
             ></div>
           </div>
@@ -140,16 +156,18 @@
     </div>
 
     <!-- Main Content -->
-    <main class="container mx-auto px-4 py-8">
+    <main class="container mx-auto px-4 py-6">
       <div class="max-w-4xl mx-auto">
         <!-- Knowledge Base Stats -->
-        <div class="bg-white rounded-2xl shadow-lg p-6 mb-8">
+        <div
+          class="bg-white/80 backdrop-blur-md rounded-2xl shadow-lg p-6 mb-6 border border-slate-200/50"
+        >
           <div class="flex items-center justify-between">
             <div>
-              <h2 class="text-xl font-bold text-gray-800 mb-2">
+              <h2 class="text-xl font-bold text-slate-800 mb-2">
                 Knowledge Base
               </h2>
-              <p class="text-gray-600">
+              <p class="text-slate-600">
                 Your AI assistant can search through uploaded documents
               </p>
             </div>
@@ -157,17 +175,19 @@
               <div class="text-2xl font-bold text-blue-600" id="totalChunks">
                 8
               </div>
-              <div class="text-sm text-gray-500">Knowledge Chunks</div>
+              <div class="text-sm text-slate-500">Knowledge Chunks</div>
             </div>
           </div>
-          <div class="mt-4 grid grid-cols-1 md:grid-cols-3 gap-4 text-center">
-            <div class="p-3 bg-blue-50 rounded-lg">
+          <div class="mt-4 grid grid-cols-1 md:grid-cols-3 gap-3 text-center">
+            <div class="p-4 bg-blue-50/50 rounded-xl border border-blue-200/50">
               <div class="text-lg font-semibold text-blue-700" id="baseChunks">
                 8
               </div>
               <div class="text-sm text-blue-600">Base Documents</div>
             </div>
-            <div class="p-3 bg-green-50 rounded-lg">
+            <div
+              class="p-4 bg-green-50/50 rounded-xl border border-green-200/50"
+            >
               <div
                 class="text-lg font-semibold text-green-700"
                 id="uploadedDocs"
@@ -176,7 +196,9 @@
               </div>
               <div class="text-sm text-green-600">Uploaded Files</div>
             </div>
-            <div class="p-3 bg-purple-50 rounded-lg">
+            <div
+              class="p-4 bg-purple-50/50 rounded-xl border border-purple-200/50"
+            >
               <div class="text-lg font-semibold text-purple-700" id="totalDocs">
                 8
               </div>
@@ -186,14 +208,16 @@
         </div>
 
         <!-- Chat Container -->
-        <div class="bg-white rounded-2xl shadow-lg overflow-hidden">
+        <div
+          class="bg-white/80 backdrop-blur-md rounded-2xl shadow-lg overflow-hidden border border-slate-200/50"
+        >
           <!-- Chat Header -->
           <div
-            class="bg-gradient-to-r from-blue-500 to-indigo-600 px-6 py-4 text-white"
+            class="bg-gradient-to-r from-blue-600 to-purple-600 px-6 py-4 text-white"
           >
             <div class="flex items-center space-x-3">
               <div
-                class="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center"
+                class="w-8 h-8 bg-white/20 rounded-xl flex items-center justify-center"
               >
                 <i class="fas fa-robot"></i>
               </div>
@@ -205,24 +229,24 @@
           </div>
 
           <!-- Messages Container -->
-          <div id="chatContainer" class="h-96 overflow-y-auto p-6 space-y-6">
+          <div id="chatContainer" class="h-96 overflow-y-auto p-6 space-y-4">
             <!-- Welcome Message with Enhanced Question Tabs -->
             <div id="welcomeCard" class="text-center py-8">
               <div
-                class="w-16 h-16 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-full flex items-center justify-center mx-auto mb-4"
+                class="w-16 h-16 bg-gradient-to-r from-blue-600 to-purple-600 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg"
               >
                 <i class="fas fa-robot text-white text-2xl"></i>
               </div>
-              <h3 class="text-xl font-semibold text-gray-800 mb-2">
+              <h3 class="text-xl font-semibold text-slate-800 mb-2">
                 Hello! I'm your AI Assistant
               </h3>
-              <p class="text-gray-600 mb-6">How can I help you today?</p>
+              <p class="text-slate-600 mb-6">How can I help you today?</p>
 
               <!-- Enhanced Question Tabs -->
               <div class="question-tabs-container max-w-2xl mx-auto">
                 <div class="grid grid-cols-2 md:grid-cols-3 gap-3 mb-6">
                   <button
-                    class="question-tab bg-gradient-to-br from-blue-50 to-blue-100 hover:from-blue-100 hover:to-blue-200 border border-blue-200 text-blue-700 p-4 rounded-xl transition-all duration-200 hover:scale-105 hover:shadow-md group"
+                    class="question-tab bg-gradient-to-br from-blue-50 to-blue-100 hover:from-blue-100 hover:to-blue-200 border border-blue-200 text-blue-700 p-4 rounded-xl transition-all duration-200 hover:scale-105 hover:shadow-lg group"
                     data-question="What are your business hours?"
                   >
                     <div
@@ -233,7 +257,7 @@
                     <div class="text-sm font-semibold">Business Hours</div>
                   </button>
                   <button
-                    class="question-tab bg-gradient-to-br from-green-50 to-green-100 hover:from-green-100 hover:to-green-200 border border-green-200 text-green-700 p-4 rounded-xl transition-all duration-200 hover:scale-105 hover:shadow-md group"
+                    class="question-tab bg-gradient-to-br from-green-50 to-green-100 hover:from-green-100 hover:to-green-200 border border-green-200 text-green-700 p-4 rounded-xl transition-all duration-200 hover:scale-105 hover:shadow-lg group"
                     data-question="Do you offer technical support?"
                   >
                     <div
@@ -244,7 +268,7 @@
                     <div class="text-sm font-semibold">Tech Support</div>
                   </button>
                   <button
-                    class="question-tab bg-gradient-to-br from-purple-50 to-purple-100 hover:from-purple-100 hover:to-purple-200 border border-purple-200 text-purple-700 p-4 rounded-xl transition-all duration-200 hover:scale-105 hover:shadow-md group"
+                    class="question-tab bg-gradient-to-br from-purple-50 to-purple-100 hover:from-purple-100 hover:to-purple-200 border border-purple-200 text-purple-700 p-4 rounded-xl transition-all duration-200 hover:scale-105 hover:shadow-lg group"
                     data-question="What services do you provide?"
                   >
                     <div
@@ -255,7 +279,7 @@
                     <div class="text-sm font-semibold">Our Services</div>
                   </button>
                   <button
-                    class="question-tab bg-gradient-to-br from-orange-50 to-orange-100 hover:from-orange-100 hover:to-orange-200 border border-orange-200 text-orange-700 p-4 rounded-xl transition-all duration-200 hover:scale-105 hover:shadow-md group"
+                    class="question-tab bg-gradient-to-br from-orange-50 to-orange-100 hover:from-orange-100 hover:to-orange-200 border border-orange-200 text-orange-700 p-4 rounded-xl transition-all duration-200 hover:scale-105 hover:shadow-lg group"
                     data-question="How can I contact customer service?"
                   >
                     <div
@@ -266,7 +290,7 @@
                     <div class="text-sm font-semibold">Contact Us</div>
                   </button>
                   <button
-                    class="question-tab bg-gradient-to-br from-red-50 to-red-100 hover:from-red-100 hover:to-red-200 border border-red-200 text-red-700 p-4 rounded-xl transition-all duration-200 hover:scale-105 hover:shadow-md group"
+                    class="question-tab bg-gradient-to-br from-red-50 to-red-100 hover:from-red-100 hover:to-red-200 border border-red-200 text-red-700 p-4 rounded-xl transition-all duration-200 hover:scale-105 hover:shadow-lg group"
                     id="uploadDocBtn"
                   >
                     <div
@@ -277,7 +301,7 @@
                     <div class="text-sm font-semibold">Upload Document</div>
                   </button>
                   <button
-                    class="question-tab bg-gradient-to-br from-indigo-50 to-indigo-100 hover:from-indigo-100 hover:to-indigo-200 border border-indigo-200 text-indigo-700 p-4 rounded-xl transition-all duration-200 hover:scale-105 hover:shadow-md group"
+                    class="question-tab bg-gradient-to-br from-indigo-50 to-indigo-100 hover:from-indigo-100 hover:to-indigo-200 border border-indigo-200 text-indigo-700 p-4 rounded-xl transition-all duration-200 hover:scale-105 hover:shadow-lg group"
                     data-question="What is your refund policy?"
                   >
                     <div
@@ -290,24 +314,26 @@
                 </div>
               </div>
 
-              <p class="text-sm text-gray-500">Or type your question below ↓</p>
+              <p class="text-sm text-slate-500">
+                Or type your question below ↓
+              </p>
             </div>
             <!-- Messages will be dynamically added here -->
           </div>
 
           <!-- Typing Indicator -->
           <div id="typingIndicator" class="px-6 py-4 hidden">
-            <div class="flex items-center space-x-2 text-gray-500">
+            <div class="flex items-center space-x-2 text-slate-500">
               <div class="flex space-x-1">
                 <div
-                  class="w-2 h-2 bg-gray-400 rounded-full animate-bounce"
+                  class="w-2 h-2 bg-slate-400 rounded-full animate-bounce"
                 ></div>
                 <div
-                  class="w-2 h-2 bg-gray-400 rounded-full animate-bounce"
+                  class="w-2 h-2 bg-slate-400 rounded-full animate-bounce"
                   style="animation-delay: 0.1s"
                 ></div>
                 <div
-                  class="w-2 h-2 bg-gray-400 rounded-full animate-bounce"
+                  class="w-2 h-2 bg-slate-400 rounded-full animate-bounce"
                   style="animation-delay: 0.2s"
                 ></div>
               </div>
@@ -315,37 +341,107 @@
             </div>
           </div>
 
-          <!-- Input Area -->
-          <div class="border-t border-gray-200 p-6">
+          <!-- Input Area with Questionnaire Toggle -->
+          <div class="border-t border-slate-200 p-6">
+            <!-- Questionnaire Toggle -->
+            <div class="mb-4 flex justify-center">
+              <button
+                id="questionnaireToggle"
+                class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl transition-all duration-200 flex items-center space-x-2 text-sm"
+              >
+                <i class="fas fa-list-alt"></i>
+                <span>Quick Questions</span>
+                <i
+                  class="fas fa-chevron-down text-xs ml-1 transition-transform duration-200"
+                  id="toggleIcon"
+                ></i>
+              </button>
+            </div>
+
+            <!-- Questionnaire Options (Hidden by default) -->
+            <div id="questionnaireOptions" class="hidden mb-4">
+              <div class="grid grid-cols-2 md:grid-cols-4 gap-2">
+                <button
+                  class="quick-question bg-slate-100 hover:bg-slate-200 text-slate-700 px-3 py-2 rounded-lg text-sm transition-all duration-200 hover:scale-105"
+                  data-question="What's your pricing?"
+                >
+                  💰 Pricing
+                </button>
+                <button
+                  class="quick-question bg-slate-100 hover:bg-slate-200 text-slate-700 px-3 py-2 rounded-lg text-sm transition-all duration-200 hover:scale-105"
+                  data-question="Do you have a free trial?"
+                >
+                  🆓 Free Trial
+                </button>
+                <button
+                  class="quick-question bg-slate-100 hover:bg-slate-200 text-slate-700 px-3 py-2 rounded-lg text-sm transition-all duration-200 hover:scale-105"
+                  data-question="How do I reset my password?"
+                >
+                  🔐 Password Reset
+                </button>
+                <button
+                  class="quick-question bg-slate-100 hover:bg-slate-200 text-slate-700 px-3 py-2 rounded-lg text-sm transition-all duration-200 hover:scale-105"
+                  data-question="Where can I find documentation?"
+                >
+                  📚 Documentation
+                </button>
+                <button
+                  class="quick-question bg-slate-100 hover:bg-slate-200 text-slate-700 px-3 py-2 rounded-lg text-sm transition-all duration-200 hover:scale-105"
+                  data-question="What payment methods do you accept?"
+                >
+                  💳 Payment Methods
+                </button>
+                <button
+                  class="quick-question bg-slate-100 hover:bg-slate-200 text-slate-700 px-3 py-2 rounded-lg text-sm transition-all duration-200 hover:scale-105"
+                  data-question="Do you offer training?"
+                >
+                  🎓 Training
+                </button>
+                <button
+                  class="quick-question bg-slate-100 hover:bg-slate-200 text-slate-700 px-3 py-2 rounded-lg text-sm transition-all duration-200 hover:scale-105"
+                  data-question="How do I cancel my subscription?"
+                >
+                  ❌ Cancel Subscription
+                </button>
+                <button
+                  class="quick-question bg-slate-100 hover:bg-slate-200 text-slate-700 px-3 py-2 rounded-lg text-sm transition-all duration-200 hover:scale-105"
+                  data-question="Can I export my data?"
+                >
+                  📊 Data Export
+                </button>
+              </div>
+            </div>
+
+            <!-- Input Field -->
             <div class="flex space-x-4">
               <div class="flex-1 relative">
                 <textarea
                   id="messageInput"
                   placeholder="Type your message here..."
                   rows="1"
-                  class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none"
+                  class="w-full px-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none bg-white/50 backdrop-blur-sm"
                 ></textarea>
                 <button
                   id="sendButton"
-                  class="absolute right-3 bottom-3 p-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition-colors"
+                  class="absolute right-3 bottom-3 p-2 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white rounded-xl transition-all duration-200 shadow-lg hover:shadow-xl"
                 >
                   <i class="fas fa-paper-plane"></i>
                 </button>
               </div>
             </div>
             <div class="mt-3 flex justify-between items-center">
-              <div class="text-sm text-gray-500">
+              <div class="text-sm text-slate-500">
                 <i class="fas fa-shield-alt mr-1"></i>
                 Your conversations are secure and private
               </div>
               <div class="flex space-x-2">
                 <button
-                  class="p-2 text-gray-500 hover:text-blue-500 transition-colors"
+                  class="p-2 text-slate-500 hover:text-blue-500 transition-colors"
                 >
                   <i class="fas fa-paperclip"></i>
                 </button>
                 <button
-                  class="p-2 text-gray-500 hover:text-blue-500 transition-colors"
+                  class="p-2 text-slate-500 hover:text-blue-500 transition-colors"
                 >
                   <i class="fas fa-microphone"></i>
                 </button>
@@ -356,36 +452,42 @@
 
         <!-- Features Section -->
         <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mt-8">
-          <div class="bg-white rounded-xl shadow p-6 text-center">
+          <div
+            class="bg-white/80 backdrop-blur-md rounded-xl shadow p-6 text-center border border-slate-200/50"
+          >
             <div
-              class="w-12 h-12 bg-blue-100 text-blue-600 rounded-lg flex items-center justify-center mx-auto mb-4"
+              class="w-12 h-12 bg-blue-100 text-blue-600 rounded-xl flex items-center justify-center mx-auto mb-4"
             >
               <i class="fas fa-search text-xl"></i>
             </div>
-            <h3 class="font-semibold text-gray-800 mb-2">Smart Search</h3>
-            <p class="text-gray-600 text-sm">
+            <h3 class="font-semibold text-slate-800 mb-2">Smart Search</h3>
+            <p class="text-slate-600 text-sm">
               Searches through all uploaded documents and knowledge base.
             </p>
           </div>
-          <div class="bg-white rounded-xl shadow p-6 text-center">
+          <div
+            class="bg-white/80 backdrop-blur-md rounded-xl shadow p-6 text-center border border-slate-200/50"
+          >
             <div
-              class="w-12 h-12 bg-green-100 text-green-600 rounded-lg flex items-center justify-center mx-auto mb-4"
+              class="w-12 h-12 bg-green-100 text-green-600 rounded-xl flex items-center justify-center mx-auto mb-4"
             >
               <i class="fas fa-file-upload text-xl"></i>
             </div>
-            <h3 class="font-semibold text-gray-800 mb-2">Document Upload</h3>
-            <p class="text-gray-600 text-sm">
+            <h3 class="font-semibold text-slate-800 mb-2">Document Upload</h3>
+            <p class="text-slate-600 text-sm">
               Upload PDF, DOCX, or TXT files to expand knowledge.
             </p>
           </div>
-          <div class="bg-white rounded-xl shadow p-6 text-center">
+          <div
+            class="bg-white/80 backdrop-blur-md rounded-xl shadow p-6 text-center border border-slate-200/50"
+          >
             <div
-              class="w-12 h-12 bg-purple-100 text-purple-600 rounded-lg flex items-center justify-center mx-auto mb-4"
+              class="w-12 h-12 bg-purple-100 text-purple-600 rounded-xl flex items-center justify-center mx-auto mb-4"
             >
               <i class="fas fa-graduation-cap text-xl"></i>
             </div>
-            <h3 class="font-semibold text-gray-800 mb-2">Always Learning</h3>
-            <p class="text-gray-600 text-sm">
+            <h3 class="font-semibold text-slate-800 mb-2">Always Learning</h3>
+            <p class="text-slate-600 text-sm">
               Continuously improves with new documents.
             </p>
           </div>
@@ -394,20 +496,22 @@
     </main>
 
     <!-- Footer -->
-    <footer class="bg-white border-t border-gray-200 mt-12">
+    <footer
+      class="bg-white/80 backdrop-blur-md border-t border-slate-200 mt-12"
+    >
       <div class="container mx-auto px-4 py-6">
         <div class="flex flex-col md:flex-row justify-between items-center">
           <div class="flex items-center space-x-2 mb-4 md:mb-0">
             <div
-              class="w-6 h-6 bg-gradient-to-r from-blue-500 to-indigo-600 rounded flex items-center justify-center"
+              class="w-6 h-6 bg-gradient-to-r from-blue-600 to-purple-600 rounded flex items-center justify-center"
             >
               <i class="fas fa-robot text-white text-xs"></i>
             </div>
-            <span class="text-gray-700 font-medium"
+            <span class="text-slate-700 font-medium"
               >AI Customer Service Platform</span
             >
           </div>
-          <div class="text-sm text-gray-500">
+          <div class="text-sm text-slate-500">
             &copy; 2025 All rights reserved. Built with ❤️ for better customer
             support.
           </div>

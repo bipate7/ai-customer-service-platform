@@ -9,6 +9,9 @@ document.addEventListener("DOMContentLoaded", function () {
   const themeToggle = document.getElementById("themeToggle");
   const typingIndicator = document.getElementById("typingIndicator");
   const welcomeCard = document.getElementById("welcomeCard");
+  const questionnaireToggle = document.getElementById("questionnaireToggle");
+  const questionnaireOptions = document.getElementById("questionnaireOptions");
+  const toggleIcon = document.getElementById("toggleIcon");
 
   // File Upload Elements
   const uploadBtn = document.getElementById("uploadBtn");
@@ -38,6 +41,7 @@ document.addEventListener("DOMContentLoaded", function () {
   let chatHistory = [];
   let currentUser = null;
   let selectedFile = null;
+  let isQuestionnaireOpen = false;
 
   // Initialize the chat
   initializeChat();
@@ -53,6 +57,9 @@ document.addEventListener("DOMContentLoaded", function () {
 
   clearChatButton.addEventListener("click", clearChat);
   themeToggle.addEventListener("click", toggleTheme);
+
+  // Questionnaire Toggle
+  questionnaireToggle.addEventListener("click", toggleQuestionnaire);
 
   // File Upload Event Listeners
   uploadBtn.addEventListener("click", openUploadModal);
@@ -86,6 +93,20 @@ document.addEventListener("DOMContentLoaded", function () {
           welcomeCard.style.display = "none";
         }
       }
+    });
+  });
+
+  // Quick questions functionality
+  const quickQuestions = document.querySelectorAll(".quick-question");
+
+  quickQuestions.forEach((question) => {
+    question.addEventListener("click", function () {
+      const questionText = this.getAttribute("data-question");
+      messageInput.value = questionText;
+      sendMessage();
+
+      // Close questionnaire after selection
+      closeQuestionnaire();
     });
   });
 
@@ -123,6 +144,30 @@ document.addEventListener("DOMContentLoaded", function () {
 
   function generateUserId() {
     return "user-" + Date.now() + "-" + Math.random().toString(36).substr(2, 9);
+  }
+
+  // Questionnaire Functions
+  function toggleQuestionnaire() {
+    if (isQuestionnaireOpen) {
+      closeQuestionnaire();
+    } else {
+      openQuestionnaire();
+    }
+  }
+
+  function openQuestionnaire() {
+    questionnaireOptions.classList.remove("hidden");
+    questionnaireOptions.style.maxHeight =
+      questionnaireOptions.scrollHeight + "px";
+    toggleIcon.classList.add("rotate-180");
+    isQuestionnaireOpen = true;
+  }
+
+  function closeQuestionnaire() {
+    questionnaireOptions.classList.add("hidden");
+    questionnaireOptions.style.maxHeight = "0";
+    toggleIcon.classList.remove("rotate-180");
+    isQuestionnaireOpen = false;
   }
 
   async function loadKnowledgeStats() {
@@ -163,6 +208,9 @@ document.addEventListener("DOMContentLoaded", function () {
       welcomeCard.style.display = "none";
     }
 
+    // Close questionnaire if open
+    closeQuestionnaire();
+
     // Show typing indicator
     showTypingIndicator();
 
@@ -190,14 +238,14 @@ document.addEventListener("DOMContentLoaded", function () {
                 <div class="user-message px-4 py-3 max-w-xs md:max-w-md">
                     ${message}
                 </div>
-                <div class="w-8 h-8 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-full flex items-center justify-center flex-shrink-0">
+                <div class="w-8 h-8 bg-gradient-to-r from-blue-600 to-purple-600 rounded-xl flex items-center justify-center flex-shrink-0 shadow-lg">
                     <i class="fas fa-user text-white text-xs"></i>
                 </div>
             `;
     } else {
       messageElement.classList.add("justify-start");
       messageElement.innerHTML = `
-                <div class="w-8 h-8 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-full flex items-center justify-center flex-shrink-0">
+                <div class="w-8 h-8 bg-gradient-to-r from-blue-600 to-purple-600 rounded-xl flex items-center justify-center flex-shrink-0 shadow-lg">
                     <i class="fas fa-robot text-white text-xs"></i>
                 </div>
                 <div class="bot-message px-4 py-3 max-w-xs md:max-w-md">
@@ -222,7 +270,7 @@ document.addEventListener("DOMContentLoaded", function () {
     }
   }
 
-  // File Upload Functions
+  // File Upload Functions (keep existing implementation)
   function openUploadModal() {
     uploadModal.classList.remove("hidden");
     resetUploadForm();
@@ -418,7 +466,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
   function disableDarkMode() {
     document.body.classList.remove("dark-mode");
-    themeToggle.innerHTML = '<i class="fas fa-moon text-gray-600"></i>';
+    themeToggle.innerHTML = '<i class="fas fa-moon text-slate-600"></i>';
     isDarkMode = false;
     localStorage.setItem("darkMode", "false");
   }

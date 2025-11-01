@@ -1,4 +1,4 @@
-/* Custom styles for the AI Customer Service Platform */
+/* Modern styles for the AI Customer Service Platform */
 
 /* Smooth scrolling for chat container */
 #chatContainer {
@@ -11,7 +11,7 @@
 }
 
 #chatContainer::-webkit-scrollbar-track {
-  background: #f1f5f9;
+  background: #f8fafc;
 }
 
 #chatContainer::-webkit-scrollbar-thumb {
@@ -25,10 +25,10 @@
 
 /* Message animations */
 .message {
-  animation: fadeIn 0.3s ease-in-out;
+  animation: fadeInUp 0.3s ease-out;
 }
 
-@keyframes fadeIn {
+@keyframes fadeInUp {
   from {
     opacity: 0;
     transform: translateY(10px);
@@ -44,15 +44,18 @@
   background: linear-gradient(135deg, #3b82f6, #6366f1);
   color: white;
   border-radius: 18px 18px 4px 18px;
-  box-shadow: 0 4px 6px -1px rgba(59, 130, 246, 0.2);
+  box-shadow: 0 4px 12px -2px rgba(59, 130, 246, 0.3);
+  backdrop-filter: blur(10px);
 }
 
 /* Bot message styling */
 .bot-message {
-  background: #f8fafc;
+  background: rgba(248, 250, 252, 0.8);
+  backdrop-filter: blur(10px);
   color: #334155;
   border-radius: 18px 18px 18px 4px;
-  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+  box-shadow: 0 2px 8px -1px rgba(0, 0, 0, 0.1);
+  border: 1px solid rgba(226, 232, 240, 0.5);
 }
 
 /* Enhanced Question Tabs Styling */
@@ -67,6 +70,7 @@
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   position: relative;
   overflow: hidden;
+  backdrop-filter: blur(10px);
 }
 
 .question-tab::before {
@@ -98,6 +102,19 @@
   transform: translateY(-2px);
 }
 
+/* Quick Questions Styling */
+.quick-question {
+  cursor: pointer;
+  border: none;
+  transition: all 0.2s ease-in-out;
+  backdrop-filter: blur(10px);
+}
+
+.quick-question:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px -2px rgba(0, 0, 0, 0.1);
+}
+
 /* Welcome message styling */
 #welcomeCard {
   animation: fadeIn 0.8s ease-out;
@@ -124,6 +141,19 @@
   }
 }
 
+/* Questionnaire toggle animation */
+#questionnaireOptions {
+  transition: all 0.3s ease-in-out;
+}
+
+#toggleIcon {
+  transition: transform 0.3s ease-in-out;
+}
+
+.rotate-180 {
+  transform: rotate(180deg);
+}
+
 /* Dark mode styles */
 .dark-mode {
   background: linear-gradient(135deg, #0f172a, #1e293b);
@@ -131,42 +161,42 @@
 }
 
 .dark-mode header {
-  background-color: #1e293b;
+  background-color: rgba(30, 41, 59, 0.8);
   border-bottom: 1px solid #334155;
 }
 
 .dark-mode .bg-white {
-  background-color: #1e293b;
+  background-color: rgba(30, 41, 59, 0.8);
   color: #e2e8f0;
 }
 
-.dark-mode .text-gray-800 {
+.dark-mode .text-slate-800 {
   color: #e2e8f0;
 }
 
-.dark-mode .text-gray-600 {
+.dark-mode .text-slate-600 {
   color: #94a3b8;
 }
 
-.dark-mode .border-gray-200 {
+.dark-mode .border-slate-200 {
   border-color: #334155;
 }
 
-.dark-mode .bg-gray-100 {
+.dark-mode .bg-slate-100 {
   background-color: #334155;
   color: #e2e8f0;
 }
 
-.dark-mode .bg-gray-100:hover {
+.dark-mode .bg-slate-100:hover {
   background-color: #475569;
 }
 
-.dark-mode .border-gray-300 {
+.dark-mode .border-slate-300 {
   border-color: #475569;
 }
 
 .dark-mode footer {
-  background-color: #1e293b;
+  background-color: rgba(30, 41, 59, 0.8);
   border-color: #334155;
 }
 
@@ -189,18 +219,24 @@
   box-shadow: 0 8px 25px -8px rgba(0, 0, 0, 0.3);
 }
 
+/* Dark mode for quick questions */
+.dark-mode .quick-question {
+  background-color: #334155;
+  color: #e2e8f0;
+}
+
+.dark-mode .quick-question:hover {
+  background-color: #475569;
+}
+
 /* Input focus styles */
 #messageInput:focus {
   outline: none;
   box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+  backdrop-filter: blur(10px);
 }
 
 /* Button hover effects */
-.suggestion-btn:hover {
-  transform: translateY(-1px);
-  transition: transform 0.2s;
-}
-
 #sendButton:hover {
   transform: scale(1.05);
   transition: transform 0.2s;
@@ -235,29 +271,16 @@
 #sendButton,
 #uploadBtn,
 #clearChat,
-#themeToggle {
+#themeToggle,
+.quick-question {
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 /* Focus states for accessibility */
-.question-tab:focus {
+.question-tab:focus,
+.quick-question:focus {
   outline: 2px solid #3b82f6;
   outline-offset: 2px;
-}
-
-/* Loading animation for question tabs */
-@keyframes pulse-glow {
-  0%,
-  100% {
-    box-shadow: 0 0 5px rgba(59, 130, 246, 0.3);
-  }
-  50% {
-    box-shadow: 0 0 20px rgba(59, 130, 246, 0.6);
-  }
-}
-
-.question-tab.loading {
-  animation: pulse-glow 2s infinite;
 }
 
 /* Responsive adjustments */
@@ -278,6 +301,10 @@
 
   #chatContainer {
     height: 50vh;
+  }
+
+  #questionnaireOptions .grid {
+    grid-template-columns: 1fr 1fr;
   }
 }
 
@@ -304,6 +331,10 @@
   .question-tab {
     padding: 1rem;
   }
+
+  #questionnaireOptions .grid {
+    grid-template-columns: 1fr;
+  }
 }
 
 @media (max-width: 480px) {
@@ -321,7 +352,8 @@
 }
 
 /* Enhanced text selection */
-.question-tab {
+.question-tab,
+.quick-question {
   user-select: none;
   -webkit-user-select: none;
   -moz-user-select: none;
@@ -329,41 +361,27 @@
 }
 
 /* Improved focus visibility for keyboard navigation */
-.question-tab:focus-visible {
+.question-tab:focus-visible,
+.quick-question:focus-visible {
   outline: 2px solid #3b82f6;
   outline-offset: 2px;
   border-radius: 0.75rem;
 }
 
+/* Glass morphism effects */
+.backdrop-blur-md {
+  backdrop-filter: blur(12px);
+}
+
+.bg-white\/80 {
+  background-color: rgba(255, 255, 255, 0.8);
+}
+
 /* Smooth color transitions */
-.question-tab {
+.question-tab,
+.quick-question {
   transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1),
     box-shadow 0.3s cubic-bezier(0.4, 0, 0.2, 1),
     background-color 0.3s cubic-bezier(0.4, 0, 0.2, 1),
     border-color 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-/* Enhanced hover states for different question tab colors */
-.question-tab.bg-gradient-to-br.from-blue-50:hover {
-  background: linear-gradient(135deg, #dbeafe, #bfdbfe);
-}
-
-.question-tab.bg-gradient-to-br.from-green-50:hover {
-  background: linear-gradient(135deg, #dcfce7, #bbf7d0);
-}
-
-.question-tab.bg-gradient-to-br.from-purple-50:hover {
-  background: linear-gradient(135deg, #f3e8ff, #e9d5ff);
-}
-
-.question-tab.bg-gradient-to-br.from-orange-50:hover {
-  background: linear-gradient(135deg, #ffedd5, #fed7aa);
-}
-
-.question-tab.bg-gradient-to-br.from-red-50:hover {
-  background: linear-gradient(135deg, #fee2e2, #fecaca);
-}
-
-.question-tab.bg-gradient-to-br.from-indigo-50:hover {
-  background: linear-gradient(135deg, #e0e7ff, #c7d2fe);
 }
