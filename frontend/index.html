@@ -13,8 +13,7 @@
       href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="styles/style.css" />
-    <!-- Add this in head section -->
+    <link rel="stylesheet" href="styles.css" />
     <script>
       // Environment configuration
       window.APP_CONFIG = {
@@ -465,7 +464,7 @@
             <div class="mb-4 flex justify-center">
               <button
                 id="questionnaireToggle"
-                class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl transition-all duration-200 flex items-center space-x-2 text-sm"
+                class="px-4 py-2 bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-white rounded-xl transition-all duration-200 flex items-center space-x-2 text-sm shadow-md"
               >
                 <i class="fas fa-list-alt"></i>
                 <span>Quick Questions</span>
@@ -480,52 +479,76 @@
             <div id="questionnaireOptions" class="hidden mb-4">
               <div class="grid grid-cols-2 md:grid-cols-4 gap-2">
                 <button
-                  class="quick-question bg-slate-100 hover:bg-slate-200 text-slate-700 px-3 py-2 rounded-lg text-sm transition-all duration-200 hover:scale-105"
+                  class="quick-question bg-gradient-to-br from-blue-50 to-blue-100 hover:from-blue-100 hover:to-blue-200 border border-blue-200 text-blue-700 px-3 py-2 rounded-lg text-sm transition-all duration-200 hover:scale-105 shadow-sm"
                   data-question="What's your pricing?"
                 >
                   💰 Pricing
                 </button>
                 <button
-                  class="quick-question bg-slate-100 hover:bg-slate-200 text-slate-700 px-3 py-2 rounded-lg text-sm transition-all duration-200 hover:scale-105"
+                  class="quick-question bg-gradient-to-br from-green-50 to-green-100 hover:from-green-100 hover:to-green-200 border border-green-200 text-green-700 px-3 py-2 rounded-lg text-sm transition-all duration-200 hover:scale-105 shadow-sm"
                   data-question="Do you have a free trial?"
                 >
                   🆓 Free Trial
                 </button>
                 <button
-                  class="quick-question bg-slate-100 hover:bg-slate-200 text-slate-700 px-3 py-2 rounded-lg text-sm transition-all duration-200 hover:scale-105"
+                  class="quick-question bg-gradient-to-br from-purple-50 to-purple-100 hover:from-purple-100 hover:to-purple-200 border border-purple-200 text-purple-700 px-3 py-2 rounded-lg text-sm transition-all duration-200 hover:scale-105 shadow-sm"
                   data-question="How do I reset my password?"
                 >
                   🔐 Password Reset
                 </button>
                 <button
-                  class="quick-question bg-slate-100 hover:bg-slate-200 text-slate-700 px-3 py-2 rounded-lg text-sm transition-all duration-200 hover:scale-105"
+                  class="quick-question bg-gradient-to-br from-orange-50 to-orange-100 hover:from-orange-100 hover:to-orange-200 border border-orange-200 text-orange-700 px-3 py-2 rounded-lg text-sm transition-all duration-200 hover:scale-105 shadow-sm"
                   data-question="Where can I find documentation?"
                 >
                   📚 Documentation
                 </button>
                 <button
-                  class="quick-question bg-slate-100 hover:bg-slate-200 text-slate-700 px-3 py-2 rounded-lg text-sm transition-all duration-200 hover:scale-105"
+                  class="quick-question bg-gradient-to-br from-red-50 to-red-100 hover:from-red-100 hover:to-red-200 border border-red-200 text-red-700 px-3 py-2 rounded-lg text-sm transition-all duration-200 hover:scale-105 shadow-sm"
                   data-question="What payment methods do you accept?"
                 >
                   💳 Payment Methods
                 </button>
                 <button
-                  class="quick-question bg-slate-100 hover:bg-slate-200 text-slate-700 px-3 py-2 rounded-lg text-sm transition-all duration-200 hover:scale-105"
+                  class="quick-question bg-gradient-to-br from-indigo-50 to-indigo-100 hover:from-indigo-100 hover:to-indigo-200 border border-indigo-200 text-indigo-700 px-3 py-2 rounded-lg text-sm transition-all duration-200 hover:scale-105 shadow-sm"
                   data-question="Do you offer training?"
                 >
                   🎓 Training
                 </button>
                 <button
-                  class="quick-question bg-slate-100 hover:bg-slate-200 text-slate-700 px-3 py-2 rounded-lg text-sm transition-all duration-200 hover:scale-105"
+                  class="quick-question bg-gradient-to-br from-pink-50 to-pink-100 hover:from-pink-100 hover:to-pink-200 border border-pink-200 text-pink-700 px-3 py-2 rounded-lg text-sm transition-all duration-200 hover:scale-105 shadow-sm"
                   data-question="How do I cancel my subscription?"
                 >
                   ❌ Cancel Subscription
                 </button>
                 <button
-                  class="quick-question bg-slate-100 hover:bg-slate-200 text-slate-700 px-3 py-2 rounded-lg text-sm transition-all duration-200 hover:scale-105"
+                  class="quick-question bg-gradient-to-br from-teal-50 to-teal-100 hover:from-teal-100 hover:to-teal-200 border border-teal-200 text-teal-700 px-3 py-2 rounded-lg text-sm transition-all duration-200 hover:scale-105 shadow-sm"
                   data-question="Can I export my data?"
                 >
                   📊 Data Export
+                </button>
+                <button
+                  class="quick-question bg-gradient-to-br from-amber-50 to-amber-100 hover:from-amber-100 hover:to-amber-200 border border-amber-200 text-amber-700 px-3 py-2 rounded-lg text-sm transition-all duration-200 hover:scale-105 shadow-sm"
+                  data-question="What are your business hours?"
+                >
+                  🕒 Business Hours
+                </button>
+                <button
+                  class="quick-question bg-gradient-to-br from-lime-50 to-lime-100 hover:from-lime-100 hover:to-lime-200 border border-lime-200 text-lime-700 px-3 py-2 rounded-lg text-sm transition-all duration-200 hover:scale-105 shadow-sm"
+                  data-question="Do you offer technical support?"
+                >
+                  🔧 Tech Support
+                </button>
+                <button
+                  class="quick-question bg-gradient-to-br from-cyan-50 to-cyan-100 hover:from-cyan-100 hover:to-cyan-200 border border-cyan-200 text-cyan-700 px-3 py-2 rounded-lg text-sm transition-all duration-200 hover:scale-105 shadow-sm"
+                  data-question="What services do you provide?"
+                >
+                  💼 Our Services
+                </button>
+                <button
+                  class="quick-question bg-gradient-to-br from-violet-50 to-violet-100 hover:from-violet-100 hover:to-violet-200 border border-violet-200 text-violet-700 px-3 py-2 rounded-lg text-sm transition-all duration-200 hover:scale-105 shadow-sm"
+                  data-question="How can I contact customer service?"
+                >
+                  📞 Contact Us
                 </button>
               </div>
             </div>
@@ -537,7 +560,7 @@
                   id="messageInput"
                   placeholder="Type your message here... (Press Shift+Enter for new line)"
                   rows="1"
-                  class="w-full px-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none bg-white/50 backdrop-blur-sm transition-all duration-300 pr-24"
+                  class="w-full px-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none bg-white/50 backdrop-blur-sm transition-all duration-300 pr-24 shadow-inner"
                 ></textarea>
 
                 <!-- Input Actions -->

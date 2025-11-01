@@ -1,4 +1,4 @@
-/* Modern styles for the AI Customer Service Platform - Phase 5 */
+/* Modern styles for the AI Customer Service Platform - Enhanced Design */
 
 /* Enhanced Smooth Scrolling */
 html {
@@ -155,6 +155,7 @@ html {
   backdrop-filter: blur(10px);
   transform-origin: center;
   border: 1px solid transparent;
+  font-weight: 500;
 }
 
 .quick-question:hover {
@@ -456,4 +457,47 @@ html {
   100% {
     background-position: 0% 50%;
   }
+}
+
+/* Additional animations */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* Enhanced shadow effects */
+.shadow-glow {
+  box-shadow: 0 0 20px rgba(59, 130, 246, 0.15);
+}
+
+/* Improved input field styling */
+#messageInput {
+  transition: all 0.3s ease;
+  box-shadow: inset 0 2px 4px 0 rgba(0, 0, 0, 0.05);
+}
+
+#messageInput:focus {
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1),
+    inset 0 2px 4px 0 rgba(0, 0, 0, 0.05);
+}
+
+/* Enhanced modal backdrop */
+.modal-backdrop {
+  backdrop-filter: blur(8px);
+  background: rgba(0, 0, 0, 0.5);
 }

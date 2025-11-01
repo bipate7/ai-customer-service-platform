@@ -1,610 +1,400 @@
-// AI Customer Service Platform - Fixed Welcome Message & Question Tabs
-document.addEventListener("DOMContentLoaded", function () {
-  console.log("🚀 Starting AI Customer Service Platform...");
-  window.aiCustomerService = new AICustomerService();
-});
+// app.js - Main application logic for AI Customer Service Platform
 
-class AICustomerService {
+class ChatApp {
   constructor() {
-    this.chatHistory = [];
-    this.currentUser = null;
-    this.selectedFile = null;
-    this.isQuestionnaireOpen = false;
     this.isDarkMode = false;
-    this.isOnline = true;
-    this.API_BASE_URL = "https://ai-customer-service-backend-rthi.onrender.com";
-
+    this.chatHistory = [];
     this.init();
   }
 
-  async init() {
-    console.log("🔧 Initializing AI Customer Service...");
-
-    try {
-      this.findDOMElements();
-      this.setupEventListeners();
-      await this.loadSavedData();
-      this.setupQuestionTabs(); // Fixed: Call this separately
-      this.setupQuickQuestions(); // Fixed: Call this separately
-      this.checkConnection();
-
-      console.log("✅ AI Customer Service initialized successfully");
-      this.showToast("AI Assistant is ready!", "success");
-    } catch (error) {
-      console.error("❌ Initialization failed:", error);
-      this.showToast("Failed to initialize chat", "error");
-    }
-  }
-
-  findDOMElements() {
-    console.log("🔍 Finding DOM elements...");
-
-    // Core Chat Elements
-    this.chatContainer = document.getElementById("chatContainer");
-    this.messageInput = document.getElementById("messageInput");
-    this.sendButton = document.getElementById("sendButton");
-    this.typingIndicator = document.getElementById("typingIndicator");
-    this.welcomeCard = document.getElementById("welcomeCard");
-
-    // Action Buttons
-    this.clearChatButton = document.getElementById("clearChat");
-    this.themeToggle = document.getElementById("themeToggle");
-    this.uploadBtn = document.getElementById("uploadBtn");
-    this.copyChat = document.getElementById("copyChat");
-
-    // Questionnaire
-    this.questionnaireToggle = document.getElementById("questionnaireToggle");
-    this.questionnaireOptions = document.getElementById("questionnaireOptions");
-    this.toggleIcon = document.getElementById("toggleIcon");
-
-    // Voice Input
-    this.voiceInputBtn = document.getElementById("voiceInputBtn");
-    this.voiceModal = document.getElementById("voiceModal");
-    this.stopVoice = document.getElementById("stopVoice");
-    this.voiceStatus = document.getElementById("voiceStatus");
-
-    // File Upload
-    this.uploadModal = document.getElementById("uploadModal");
-    this.closeModal = document.getElementById("closeModal");
-    this.cancelUpload = document.getElementById("cancelUpload");
-    this.fileInput = document.getElementById("fileInput");
-    this.browseBtn = document.getElementById("browseBtn");
-    this.fileInfo = document.getElementById("fileInfo");
-    this.fileName = document.getElementById("fileName");
-    this.fileSize = document.getElementById("fileSize");
-    this.removeFile = document.getElementById("removeFile");
-    this.confirmUpload = document.getElementById("confirmUpload");
-
-    // Stats
-    this.totalChunks = document.getElementById("totalChunks");
-    this.uploadedDocs = document.getElementById("uploadedDocs");
-    this.searchCount = document.getElementById("searchCount");
-
-    console.log("✅ DOM elements found");
+  init() {
+    this.setupEventListeners();
+    this.setupQuickQuestions();
+    this.setupMessageInput();
+    this.setupFileUpload();
+    this.setupVoiceInput();
   }
 
   setupEventListeners() {
-    console.log("🎯 Setting up event listeners...");
-
-    // Core Chat
-    if (this.sendButton) {
-      this.sendButton.addEventListener("click", () => this.sendMessage());
-    }
-
-    if (this.messageInput) {
-      this.messageInput.addEventListener("keypress", (e) => {
-        if (e.key === "Enter" && !e.shiftKey) {
-          e.preventDefault();
-          this.sendMessage();
-        }
-      });
-
-      // Auto-resize textarea
-      this.messageInput.addEventListener("input", () => {
-        this.autoResizeTextarea();
-      });
-    }
-
-    // Actions
-    if (this.clearChatButton) {
-      this.clearChatButton.addEventListener("click", () => this.clearChat());
-    }
-    if (this.themeToggle) {
-      this.themeToggle.addEventListener("click", () => this.toggleTheme());
-    }
-    if (this.uploadBtn) {
-      this.uploadBtn.addEventListener("click", () => this.openUploadModal());
-    }
-    if (this.copyChat) {
-      this.copyChat.addEventListener("click", () => this.copyChatToClipboard());
-    }
-
-    // Questionnaire Toggle
-    if (this.questionnaireToggle) {
-      this.questionnaireToggle.addEventListener("click", () =>
-        this.toggleQuestionnaire()
-      );
-    }
-
-    // Voice
-    if (this.voiceInputBtn) {
-      this.voiceInputBtn.addEventListener("click", () =>
-        this.startVoiceInput()
-      );
-    }
-    if (this.stopVoice) {
-      this.stopVoice.addEventListener("click", () => this.stopVoiceInput());
-    }
-
-    // File Upload
-    if (this.closeModal) {
-      this.closeModal.addEventListener("click", () => this.closeUploadModal());
-    }
-    if (this.cancelUpload) {
-      this.cancelUpload.addEventListener("click", () =>
-        this.closeUploadModal()
-      );
-    }
-    if (this.browseBtn) {
-      this.browseBtn.addEventListener("click", () => this.fileInput?.click());
-    }
-    if (this.fileInput) {
-      this.fileInput.addEventListener("change", (e) =>
-        this.handleFileSelect(e)
-      );
-    }
-    if (this.removeFile) {
-      this.removeFile.addEventListener("click", () =>
-        this.removeSelectedFile()
-      );
-    }
-    if (this.confirmUpload) {
-      this.confirmUpload.addEventListener("click", () => this.uploadFile());
-    }
-
-    // Network monitoring
-    window.addEventListener("online", () => this.handleConnectionChange(true));
-    window.addEventListener("offline", () =>
-      this.handleConnectionChange(false)
-    );
-
-    console.log("✅ Event listeners setup complete");
-  }
-
-  // FIXED: Separate setup for question tabs
-  setupQuestionTabs() {
-    console.log("🔘 Setting up question tabs...");
-
-    const questionTabs = document.querySelectorAll(".question-tab");
-    console.log(`Found ${questionTabs.length} question tabs`);
-
-    questionTabs.forEach((tab, index) => {
-      tab.addEventListener("click", (e) => {
-        e.preventDefault();
-        console.log(`Question tab ${index} clicked`);
-        this.handleQuestionTabClick(tab);
-      });
-
-      // Add visual feedback
-      tab.style.cursor = "pointer";
-      tab.style.transition = "all 0.2s ease";
+    // Theme toggle
+    document.getElementById("themeToggle").addEventListener("click", () => {
+      this.toggleTheme();
     });
 
-    console.log("✅ Question tabs setup complete");
+    // Clear chat
+    document.getElementById("clearChat").addEventListener("click", () => {
+      this.clearChat();
+    });
+
+    // Settings button
+    document.getElementById("settingsBtn").addEventListener("click", () => {
+      this.showSettings();
+    });
+
+    // Copy chat
+    document.getElementById("copyChat").addEventListener("click", () => {
+      this.copyChat();
+    });
+
+    // Refresh stats
+    document.getElementById("refreshStats").addEventListener("click", () => {
+      this.refreshStats();
+    });
   }
 
-  // FIXED: Separate setup for quick questions
   setupQuickQuestions() {
-    console.log("🔘 Setting up quick questions...");
+    const questionnaireToggle = document.getElementById("questionnaireToggle");
+    const questionnaireOptions = document.getElementById(
+      "questionnaireOptions"
+    );
+    const toggleIcon = document.getElementById("toggleIcon");
 
-    const quickQuestions = document.querySelectorAll(".quick-question");
-    console.log(`Found ${quickQuestions.length} quick questions`);
-
-    quickQuestions.forEach((question, index) => {
-      question.addEventListener("click", (e) => {
-        e.preventDefault();
-        console.log(`Quick question ${index} clicked`);
-        this.handleQuickQuestionClick(question);
-      });
-
-      // Add visual feedback
-      question.style.cursor = "pointer";
-      question.style.transition = "all 0.2s ease";
+    questionnaireToggle.addEventListener("click", () => {
+      questionnaireOptions.classList.toggle("hidden");
+      toggleIcon.classList.toggle("fa-chevron-down");
+      toggleIcon.classList.toggle("fa-chevron-up");
     });
 
-    console.log("✅ Quick questions setup complete");
+    // Handle quick question clicks
+    const quickQuestions = document.querySelectorAll(".quick-question");
+    const messageInput = document.getElementById("messageInput");
+
+    quickQuestions.forEach((button) => {
+      button.addEventListener("click", () => {
+        const question = button.getAttribute("data-question");
+        messageInput.value = question;
+        messageInput.focus();
+      });
+    });
+
+    // Handle question tab clicks
+    const questionTabs = document.querySelectorAll(".question-tab");
+
+    questionTabs.forEach((tab) => {
+      tab.addEventListener("click", () => {
+        if (tab.id === "uploadDocBtn") {
+          document.getElementById("uploadBtn").click();
+        } else {
+          const question = tab.getAttribute("data-question");
+          messageInput.value = question;
+          messageInput.focus();
+        }
+      });
+    });
   }
 
-  async loadSavedData() {
-    console.log("💾 Loading saved data...");
+  setupMessageInput() {
+    const messageInput = document.getElementById("messageInput");
+    const sendButton = document.getElementById("sendButton");
+    const charCounter = document.getElementById("charCounter");
+    const charCount = document.getElementById("charCount");
 
-    try {
-      // User ID
-      this.currentUser =
-        localStorage.getItem("userId") || this.generateUserId();
-      localStorage.setItem("userId", this.currentUser);
+    // Auto-resize textarea
+    messageInput.addEventListener("input", () => {
+      messageInput.style.height = "auto";
+      messageInput.style.height = messageInput.scrollHeight + "px";
 
-      // Chat History
-      const savedHistory = localStorage.getItem("chatHistory");
-      if (savedHistory) {
-        this.chatHistory = JSON.parse(savedHistory);
-        if (this.chatHistory.length > 0 && this.welcomeCard) {
-          this.welcomeCard.style.display = "none";
-          this.chatHistory.forEach((msg) => {
-            this.addMessageToChat(msg.text, msg.sender, false);
-          });
+      // Show character counter when typing
+      const length = messageInput.value.length;
+      if (length > 0) {
+        charCounter.classList.remove("hidden");
+        charCount.textContent = length;
+
+        // Change color when approaching limit
+        if (length > 800) {
+          charCounter.classList.add("text-orange-500");
+          charCounter.classList.remove("text-slate-400");
+        } else {
+          charCounter.classList.remove("text-orange-500");
+          charCounter.classList.add("text-slate-400");
         }
       } else {
-        // FIXED: Show welcome message if no history exists
-        this.showWelcomeMessage();
+        charCounter.classList.add("hidden");
       }
+    });
 
-      // Theme
-      if (localStorage.getItem("darkMode") === "true") {
-        this.enableDarkMode();
+    // Send message on Enter (but allow Shift+Enter for new line)
+    messageInput.addEventListener("keydown", (e) => {
+      if (e.key === "Enter" && !e.shiftKey) {
+        e.preventDefault();
+        this.sendMessage();
       }
+    });
 
-      // Search Count
-      this.searchCountValue =
-        parseInt(localStorage.getItem("searchCount")) || 0;
-      this.updateSearchCount();
-
-      // Load knowledge stats
-      await this.loadKnowledgeStats();
-
-      console.log("✅ Saved data loaded");
-    } catch (error) {
-      console.warn("⚠️ Error loading saved data:", error);
-      // FIXED: Show welcome message even if loading fails
-      this.showWelcomeMessage();
-    }
+    // Send button functionality
+    sendButton.addEventListener("click", () => {
+      this.sendMessage();
+    });
   }
 
-  // NEW: Show welcome message
-  showWelcomeMessage() {
-    console.log("👋 Showing welcome message");
-    if (this.welcomeCard) {
-      this.welcomeCard.style.display = "block";
-    }
+  setupFileUpload() {
+    const uploadBtn = document.getElementById("uploadBtn");
+    const closeModal = document.getElementById("closeModal");
+    const cancelUpload = document.getElementById("cancelUpload");
+    const browseBtn = document.getElementById("browseBtn");
+    const fileInput = document.getElementById("fileInput");
+    const confirmUpload = document.getElementById("confirmUpload");
+    const removeFile = document.getElementById("removeFile");
+    const uploadModal = document.getElementById("uploadModal");
 
-    // Add a welcome message from the bot if chat is empty
-    if (this.chatHistory.length === 0 && this.chatContainer) {
-      setTimeout(() => {
-        this.addMessageToChat(
-          "Hello! I'm your AI customer service assistant. I can help you with questions about our services, business hours, pricing, technical support, and more. How can I help you today?",
-          "bot",
-          true
-        );
-      }, 500);
-    }
+    uploadBtn.addEventListener("click", () => {
+      uploadModal.classList.remove("hidden");
+    });
+
+    closeModal.addEventListener("click", () => {
+      uploadModal.classList.add("hidden");
+    });
+
+    cancelUpload.addEventListener("click", () => {
+      uploadModal.classList.add("hidden");
+    });
+
+    browseBtn.addEventListener("click", () => {
+      fileInput.click();
+    });
+
+    fileInput.addEventListener("change", (e) => {
+      this.handleFileSelect(e);
+    });
+
+    removeFile.addEventListener("click", () => {
+      this.clearFileSelection();
+    });
+
+    confirmUpload.addEventListener("click", () => {
+      this.uploadFile();
+    });
   }
 
-  // ========== CORE CHAT FUNCTIONALITY ==========
+  setupVoiceInput() {
+    const voiceInputBtn = document.getElementById("voiceInputBtn");
+    const voiceModal = document.getElementById("voiceModal");
+    const stopVoice = document.getElementById("stopVoice");
+    const voiceToggle = document.getElementById("voiceToggle");
 
-  async sendMessage() {
-    const message = this.messageInput?.value?.trim();
+    voiceInputBtn.addEventListener("click", () => {
+      voiceModal.classList.remove("hidden");
+      this.startVoiceInput();
+    });
 
-    if (!message) {
-      this.showToast("Please enter a message", "warning");
-      return;
-    }
+    stopVoice.addEventListener("click", () => {
+      voiceModal.classList.add("hidden");
+      this.stopVoiceInput();
+    });
 
-    console.log("💬 Sending message:", message);
-
-    // Add user message
-    this.addMessageToChat(message, "user");
-
-    // Clear input
-    if (this.messageInput) {
-      this.messageInput.value = "";
-      this.autoResizeTextarea();
-    }
-
-    // Hide welcome card
-    if (this.welcomeCard) {
-      this.welcomeCard.style.display = "none";
-    }
-
-    // Close questionnaire
-    this.closeQuestionnaire();
-
-    // Show typing indicator
-    this.showTypingIndicator();
-
-    // Increment search count
-    this.incrementSearchCount();
-
-    try {
-      // Get AI response
-      const response = await this.getAIResponse(message);
-      this.hideTypingIndicator();
-      this.addMessageToChat(response, "bot");
-    } catch (error) {
-      this.hideTypingIndicator();
-      console.error("❌ Error getting AI response:", error);
-      const fallback = this.getFallbackResponse(error);
-      this.addMessageToChat(fallback, "bot");
-      this.showToast("Failed to get response from AI", "error");
-    }
-  }
-
-  async getAIResponse(message) {
-    try {
-      const response = await fetch(`${this.API_BASE_URL}/api/chat`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Accept: "application/json",
-        },
-        body: JSON.stringify({
-          message: message,
-          userId: this.currentUser,
-          conversationContext: this.chatHistory.slice(-4),
-        }),
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        return (
-          data.response ||
-          data.message ||
-          "I received your message but didn't get a proper response from the AI."
-        );
+    voiceToggle.addEventListener("click", () => {
+      if (voiceModal.classList.contains("hidden")) {
+        voiceModal.classList.remove("hidden");
+        this.startVoiceInput();
       } else {
-        throw new Error(`API error: ${response.status}`);
+        voiceModal.classList.add("hidden");
+        this.stopVoiceInput();
       }
-    } catch (error) {
-      console.warn("🌐 API unavailable, using fallback:", error);
-      // Fallback to simulated responses
-      return this.getFallbackAIResponse(message);
+    });
+  }
+
+  sendMessage() {
+    const messageInput = document.getElementById("messageInput");
+    const message = messageInput.value.trim();
+
+    if (message) {
+      this.addMessageToChat(message, "user");
+      messageInput.value = "";
+      messageInput.style.height = "auto";
+
+      // Hide character counter
+      document.getElementById("charCounter").classList.add("hidden");
+
+      // Show typing indicator
+      this.showTypingIndicator();
+
+      // Simulate AI response after a delay
+      setTimeout(() => {
+        this.hideTypingIndicator();
+        const response = this.generateAIResponse(message);
+        this.addMessageToChat(response, "bot");
+      }, 1500 + Math.random() * 1000);
     }
   }
 
-  getFallbackAIResponse(message) {
-    const lowerMessage = message.toLowerCase();
+  addMessageToChat(message, sender) {
+    const chatContainer = document.getElementById("chatContainer");
+    const welcomeCard = document.getElementById("welcomeCard");
 
+    // Hide welcome card after first message
+    if (welcomeCard && sender === "user") {
+      welcomeCard.style.display = "none";
+    }
+
+    const messageDiv = document.createElement("div");
+    messageDiv.className = `message ${sender}-message flex ${
+      sender === "user" ? "justify-end" : "justify-start"
+    }`;
+
+    const messageBubble = document.createElement("div");
+    messageBubble.className = `max-w-[80%] p-4 rounded-2xl ${
+      sender === "user"
+        ? "bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-br-md"
+        : "bg-slate-100 text-slate-800 rounded-bl-md"
+    }`;
+
+    messageBubble.textContent = message;
+    messageDiv.appendChild(messageBubble);
+    chatContainer.appendChild(messageDiv);
+
+    // Add to chat history
+    this.chatHistory.push({
+      sender,
+      message,
+      timestamp: new Date().toISOString(),
+    });
+
+    // Scroll to bottom
+    chatContainer.scrollTop = chatContainer.scrollHeight;
+  }
+
+  showTypingIndicator() {
+    document.getElementById("typingIndicator").classList.remove("hidden");
+  }
+
+  hideTypingIndicator() {
+    document.getElementById("typingIndicator").classList.add("hidden");
+  }
+
+  generateAIResponse(question) {
     const responses = {
-      hello: "Hello! How can I assist you today?",
-      hi: "Hi there! What can I help you with?",
-      help: "I can help you with:\n• Business information\n• Technical support\n• Document analysis\n• General inquiries\n\nWhat do you need help with?",
-      thank: "You're welcome! Is there anything else I can help you with?",
-      hours:
-        "Our business hours are:\nMonday - Friday: 9:00 AM - 6:00 PM EST\nSaturday: 10:00 AM - 2:00 PM EST",
-      contact:
-        "You can contact us through:\n📞 Phone: 1-800-123-4567\n📧 Email: support@company.com\n💬 Live Chat: Available 24/7",
-      pricing:
-        "We offer flexible pricing plans:\n• Basic: $29/month\n• Professional: $79/month\n• Enterprise: Custom pricing\n\nWhich plan interests you?",
-      support:
-        "Our technical support team is available 24/7. You can reach them via phone, email, or the live chat feature in your dashboard.",
-      upload:
-        'To upload documents:\n1. Click the "Upload Docs" button\n2. Select your file (PDF, DOCX, TXT)\n3. Wait for processing\n4. Ask questions about your document!',
-      refund:
-        "We offer a 30-day money-back guarantee. If you're not satisfied, contact our support team for a full refund.",
-      service:
-        "We provide:\n• AI-powered customer support\n• Document analysis\n• Knowledge base management\n• 24/7 availability\n\nWhich service are you interested in?",
+      "What are your business hours?":
+        "Our business hours are Monday to Friday, 9 AM to 6 PM EST. We're also available on Saturdays from 10 AM to 2 PM for urgent matters.",
+      "Do you offer technical support?":
+        "Yes, we offer 24/7 technical support for all our premium customers. Basic support is available during business hours.",
+      "What services do you provide?":
+        "We provide a range of services including AI-powered customer support, document analysis, automated response systems, and custom AI solutions tailored to your business needs.",
+      "How can I contact customer service?":
+        "You can contact our customer service team via email at support@example.com, through our live chat, or by calling 1-800-123-4567 during business hours.",
+      "What is your refund policy?":
+        "We offer a 30-day money-back guarantee for all our subscription plans. If you're not satisfied, you can request a full refund within 30 days of purchase.",
+      "What's your pricing?":
+        "We offer three pricing tiers: Basic ($29/month), Pro ($79/month), and Enterprise ($199/month). All plans include our core AI features with varying levels of support and customization.",
+      "Do you have a free trial?":
+        "Yes, we offer a 14-day free trial for our Pro plan. No credit card required to get started!",
+      "How do I reset my password?":
+        "You can reset your password by clicking on 'Forgot Password' on the login page. We'll send a reset link to your registered email address.",
+      "Where can I find documentation?":
+        "Our comprehensive documentation is available at docs.example.com. You'll find API references, setup guides, and troubleshooting information there.",
+      "What payment methods do you accept?":
+        "We accept all major credit cards (Visa, MasterCard, American Express), PayPal, and bank transfers for annual plans.",
+      "Do you offer training?":
+        "Yes, we offer comprehensive training sessions for new customers. We have both self-paced online courses and live training sessions with our experts.",
+      "How do I cancel my subscription?":
+        "You can cancel your subscription at any time from your account settings. There are no cancellation fees, and you'll have access until the end of your billing period.",
+      "Can I export my data?":
+        "Yes, you can export all your data in CSV or JSON format from the data management section in your account settings.",
     };
 
-    for (const [key, response] of Object.entries(responses)) {
-      if (lowerMessage.includes(key)) {
-        return response;
-      }
-    }
-
-    return `Thank you for your message! I understand you're asking about "${message}". I'm an AI assistant trained to help with customer service inquiries. I can answer questions about our services, business hours, pricing, technical support, and more. Could you provide more specific details about what you need help with?`;
-  }
-
-  addMessageToChat(message, sender, saveToHistory = true) {
-    if (!this.chatContainer) {
-      console.error("❌ Chat container not found");
-      return;
-    }
-
-    const messageElement = document.createElement("div");
-    messageElement.className = `flex items-end space-x-2 ${
-      sender === "user" ? "justify-end" : "justify-start"
-    } message`;
-    messageElement.style.animation = "fadeInUp 0.3s ease-out";
-
-    if (sender === "user") {
-      messageElement.innerHTML = `
-                <div class="user-message px-4 py-3 max-w-xs md:max-w-md rounded-xl shadow-lg">
-                    ${this.escapeHtml(message)}
-                </div>
-                <div class="w-8 h-8 bg-gradient-to-r from-blue-600 to-purple-600 rounded-full flex items-center justify-center flex-shrink-0 shadow-lg">
-                    <i class="fas fa-user text-white text-xs"></i>
-                </div>
-            `;
-    } else {
-      messageElement.innerHTML = `
-                <div class="w-8 h-8 bg-gradient-to-r from-blue-600 to-purple-600 rounded-full flex items-center justify-center flex-shrink-0 shadow-lg">
-                    <i class="fas fa-robot text-white text-xs"></i>
-                </div>
-                <div class="bot-message px-4 py-3 max-w-xs md:max-w-md rounded-xl shadow-lg">
-                    ${this.formatBotResponse(message)}
-                </div>
-            `;
-    }
-
-    this.chatContainer.appendChild(messageElement);
-    this.scrollToBottom();
-
-    // Save to history
-    if (saveToHistory) {
-      this.chatHistory.push({
-        text: message,
-        sender: sender,
-        timestamp: new Date().toISOString(),
-      });
-
-      // Keep only last 50 messages
-      if (this.chatHistory.length > 50) {
-        this.chatHistory.shift();
-      }
-
-      localStorage.setItem("chatHistory", JSON.stringify(this.chatHistory));
-    }
-  }
-
-  // ========== QUESTIONNAIRE FUNCTIONALITY ==========
-
-  toggleQuestionnaire() {
-    if (this.isQuestionnaireOpen) {
-      this.closeQuestionnaire();
-    } else {
-      this.openQuestionnaire();
-    }
-  }
-
-  openQuestionnaire() {
-    if (this.questionnaireOptions && this.toggleIcon) {
-      this.questionnaireOptions.classList.remove("hidden");
-      this.toggleIcon.classList.add("rotate-180");
-      this.isQuestionnaireOpen = true;
-    }
-  }
-
-  closeQuestionnaire() {
-    if (this.questionnaireOptions && this.toggleIcon) {
-      this.questionnaireOptions.classList.add("hidden");
-      this.toggleIcon.classList.remove("rotate-180");
-      this.isQuestionnaireOpen = false;
-    }
-  }
-
-  // FIXED: Improved question tab click handler
-  handleQuestionTabClick(tab) {
-    console.log("🔄 Handling question tab click");
-
-    // Add click animation
-    tab.style.transform = "scale(0.95)";
-    setTimeout(() => {
-      tab.style.transform = "";
-    }, 200);
-
-    const question = tab.getAttribute("data-question");
-    console.log("Question from tab:", question);
-
-    if (tab.id === "uploadDocBtn") {
-      this.openUploadModal();
-    } else if (question && this.messageInput) {
-      // Set the question in input and send it
-      this.messageInput.value = question;
-      this.autoResizeTextarea();
-      this.sendMessage();
-
-      // Hide welcome card
-      if (this.welcomeCard) {
-        this.welcomeCard.style.display = "none";
-      }
-    } else {
-      console.error("❌ No question found on tab or message input missing");
-    }
-  }
-
-  // FIXED: Improved quick question click handler
-  handleQuickQuestionClick(question) {
-    console.log("🔄 Handling quick question click");
-
-    const questionText = question.getAttribute("data-question");
-    console.log("Quick question:", questionText);
-
-    if (questionText && this.messageInput) {
-      this.messageInput.value = questionText;
-      this.autoResizeTextarea();
-      this.sendMessage();
-      this.closeQuestionnaire();
-    } else {
-      console.error("❌ No question text found or message input missing");
-    }
-  }
-
-  // ... REST OF THE METHODS REMAIN THE SAME (Voice, File Upload, Utilities, etc.)
-
-  // ========== VOICE INPUT ==========
-
-  startVoiceInput() {
-    if (!("webkitSpeechRecognition" in window)) {
-      this.showToast("Voice input is not supported in your browser", "warning");
-      return;
-    }
-
-    this.showToast("Starting voice input... Speak now", "info");
-    if (this.voiceModal) {
-      this.voiceModal.classList.remove("hidden");
-    }
-
-    // Simulate voice input for demo
-    setTimeout(() => {
-      if (this.messageInput) {
-        this.messageInput.value =
-          "I would like to know about your business hours";
-        this.autoResizeTextarea();
-        this.showToast("Voice input received", "success");
-      }
-    }, 2000);
-  }
-
-  stopVoiceInput() {
-    this.showToast("Voice input stopped", "info");
-    if (this.voiceModal) {
-      this.voiceModal.classList.add("hidden");
-    }
-  }
-
-  // ========== FILE UPLOAD ==========
-
-  openUploadModal() {
-    if (this.uploadModal) {
-      this.uploadModal.classList.remove("hidden");
-      this.resetUploadForm();
-    }
-  }
-
-  closeUploadModal() {
-    if (this.uploadModal) {
-      this.uploadModal.classList.add("hidden");
-      this.resetUploadForm();
-    }
-  }
-
-  resetUploadForm() {
-    this.selectedFile = null;
-    if (this.fileInput) this.fileInput.value = "";
-    if (this.fileInfo) this.fileInfo.classList.add("hidden");
-    if (this.confirmUpload) this.confirmUpload.disabled = true;
+    return (
+      responses[question] ||
+      "I understand you're asking about: " +
+        question +
+        ". Our team is constantly updating our knowledge base. For the most accurate and up-to-date information on this topic, I recommend contacting our support team directly."
+    );
   }
 
   handleFileSelect(event) {
     const file = event.target.files[0];
     if (!file) return;
 
-    // Validate file
-    const validTypes = [".pdf", ".docx", ".txt", ".md", ".csv"];
-    const fileExtension = "." + file.name.split(".").pop().toLowerCase();
+    // Check file size
+    if (file.size > window.APP_CONFIG.MAX_FILE_SIZE) {
+      this.showUploadResult("File size exceeds 10MB limit.", "error");
+      return;
+    }
 
-    if (!validTypes.includes(fileExtension)) {
+    // Check file type
+    const allowedTypes = [".pdf", ".docx", ".txt", ".md", ".csv"];
+    const fileExtension = "." + file.name.split(".").pop().toLowerCase();
+    if (!allowedTypes.includes(fileExtension)) {
       this.showUploadResult(
-        "Please select a PDF, DOCX, TXT, MD, or CSV file.",
+        "File type not supported. Please upload PDF, DOCX, TXT, MD, or CSV files.",
         "error"
       );
       return;
     }
 
-    if (file.size > 10 * 1024 * 1024) {
-      this.showUploadResult("File size must be less than 10MB.", "error");
-      return;
-    }
+    // Show file info
+    const fileInfo = document.getElementById("fileInfo");
+    const fileName = document.getElementById("fileName");
+    const fileSize = document.getElementById("fileSize");
+    const confirmUpload = document.getElementById("confirmUpload");
 
-    this.selectedFile = file;
-    this.updateFileInfo(file);
+    fileName.textContent = file.name;
+    fileSize.textContent = this.formatFileSize(file.size);
+    fileInfo.classList.remove("hidden");
+    confirmUpload.disabled = false;
   }
 
-  updateFileInfo(file) {
-    if (this.fileName) this.fileName.textContent = file.name;
-    if (this.fileSize)
-      this.fileSize.textContent = this.formatFileSize(file.size);
-    if (this.fileInfo) this.fileInfo.classList.remove("hidden");
-    if (this.confirmUpload) this.confirmUpload.disabled = false;
+  clearFileSelection() {
+    const fileInput = document.getElementById("fileInput");
+    const fileInfo = document.getElementById("fileInfo");
+    const confirmUpload = document.getElementById("confirmUpload");
+
+    fileInput.value = "";
+    fileInfo.classList.add("hidden");
+    confirmUpload.disabled = true;
+  }
+
+  uploadFile() {
+    const fileInput = document.getElementById("fileInput");
+    const file = fileInput.files[0];
+    if (!file) return;
+
+    const uploadProgress = document.getElementById("uploadProgress");
+    const progressBar = document.getElementById("progressBar");
+    const progressPercent = document.getElementById("progressPercent");
+    const confirmUpload = document.getElementById("confirmUpload");
+
+    // Show progress
+    uploadProgress.classList.remove("hidden");
+    confirmUpload.disabled = true;
+
+    // Simulate upload progress
+    let progress = 0;
+    const interval = setInterval(() => {
+      progress += Math.random() * 15;
+      if (progress >= 100) {
+        progress = 100;
+        clearInterval(interval);
+
+        // Upload complete
+        setTimeout(() => {
+          this.showUploadResult(
+            "File uploaded successfully! The AI assistant can now use this document to answer your questions.",
+            "success"
+          );
+          this.updateStats();
+          setTimeout(() => {
+            document.getElementById("uploadModal").classList.add("hidden");
+            uploadProgress.classList.add("hidden");
+            this.clearFileSelection();
+            progressBar.style.width = "0%";
+            progressPercent.textContent = "0%";
+          }, 2000);
+        }, 500);
+      }
+
+      progressBar.style.width = progress + "%";
+      progressPercent.textContent = Math.round(progress) + "%";
+    }, 200);
+  }
+
+  showUploadResult(message, type) {
+    const uploadResult = document.getElementById("uploadResult");
+    uploadResult.textContent = message;
+    uploadResult.className = `mt-4 p-3 rounded-lg ${
+      type === "success"
+        ? "bg-green-100 text-green-800 border border-green-200"
+        : "bg-red-100 text-red-800 border border-red-200"
+    }`;
+    uploadResult.classList.remove("hidden");
   }
 
   formatFileSize(bytes) {
@@ -615,283 +405,151 @@ class AICustomerService {
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i];
   }
 
-  removeSelectedFile() {
-    this.selectedFile = null;
-    if (this.fileInput) this.fileInput.value = "";
-    if (this.fileInfo) this.fileInfo.classList.add("hidden");
-    if (this.confirmUpload) this.confirmUpload.disabled = true;
+  startVoiceInput() {
+    const voiceIndicator = document.getElementById("voiceIndicator");
+    const voiceStatus = document.getElementById("voiceStatus");
+
+    voiceIndicator.classList.remove("hidden");
+    voiceStatus.textContent = "Listening...";
+
+    // In a real implementation, this would use the Web Speech API
+    console.log("Voice input started");
   }
 
-  async uploadFile() {
-    if (!this.selectedFile) return;
+  stopVoiceInput() {
+    const voiceIndicator = document.getElementById("voiceIndicator");
+    const voiceStatus = document.getElementById("voiceStatus");
 
-    this.showToast("Uploading file...", "info");
+    voiceIndicator.classList.add("hidden");
+    voiceStatus.textContent = "Stopped";
 
-    try {
-      const formData = new FormData();
-      formData.append("file", this.selectedFile);
-
-      const response = await fetch(`${this.API_BASE_URL}/api/upload`, {
-        method: "POST",
-        body: formData,
-      });
-
-      if (response.ok) {
-        const result = await response.json();
-        this.showUploadResult(`✅ ${result.message}`, "success");
-        await this.loadKnowledgeStats();
-
-        setTimeout(() => {
-          this.closeUploadModal();
-        }, 2000);
-      } else {
-        const error = await response.json();
-        this.showUploadResult(`❌ ${error.error}`, "error");
-      }
-    } catch (error) {
-      console.error("Upload error:", error);
-      this.showUploadResult("❌ Upload failed. Please try again.", "error");
-    }
+    console.log("Voice input stopped");
   }
-
-  // ========== UTILITY METHODS ==========
-
-  showTypingIndicator() {
-    if (this.typingIndicator) {
-      this.typingIndicator.classList.remove("hidden");
-      this.scrollToBottom();
-    }
-  }
-
-  hideTypingIndicator() {
-    if (this.typingIndicator) {
-      this.typingIndicator.classList.add("hidden");
-    }
-  }
-
-  autoResizeTextarea() {
-    if (this.messageInput) {
-      this.messageInput.style.height = "auto";
-      this.messageInput.style.height = this.messageInput.scrollHeight + "px";
-    }
-  }
-
-  scrollToBottom() {
-    if (this.chatContainer) {
-      this.chatContainer.scrollTop = this.chatContainer.scrollHeight;
-    }
-  }
-
-  escapeHtml(text) {
-    const div = document.createElement("div");
-    div.textContent = text;
-    return div.innerHTML;
-  }
-
-  formatBotResponse(text) {
-    return text.replace(/\n/g, "<br>");
-  }
-
-  generateUserId() {
-    return "user-" + Date.now() + "-" + Math.random().toString(36).substr(2, 9);
-  }
-
-  // ========== THEME MANAGEMENT ==========
 
   toggleTheme() {
+    this.isDarkMode = !this.isDarkMode;
+    document.body.classList.toggle("dark-mode");
+
+    const themeIcon = document.getElementById("themeToggle").querySelector("i");
     if (this.isDarkMode) {
-      this.disableDarkMode();
+      themeIcon.classList.remove("fa-moon");
+      themeIcon.classList.add("fa-sun");
+      document.body.classList.add("bg-slate-900");
+      document.body.classList.remove(
+        "bg-gradient-to-br",
+        "from-slate-50",
+        "to-blue-50"
+      );
     } else {
-      this.enableDarkMode();
-    }
-  }
-
-  enableDarkMode() {
-    document.body.classList.add("dark-mode");
-    if (this.themeToggle) {
-      this.themeToggle.innerHTML = '<i class="fas fa-sun text-yellow-400"></i>';
-    }
-    this.isDarkMode = true;
-    localStorage.setItem("darkMode", "true");
-  }
-
-  disableDarkMode() {
-    document.body.classList.remove("dark-mode");
-    if (this.themeToggle) {
-      this.themeToggle.innerHTML = '<i class="fas fa-moon text-slate-600"></i>';
-    }
-    this.isDarkMode = false;
-    localStorage.setItem("darkMode", "false");
-  }
-
-  // ========== KNOWLEDGE BASE ==========
-
-  async loadKnowledgeStats() {
-    try {
-      const response = await fetch(`${this.API_BASE_URL}/api/knowledge/stats`);
-      if (response.ok) {
-        const stats = await response.json();
-        this.updateStatsDisplay(stats);
-      }
-    } catch (error) {
-      console.warn("Failed to load knowledge stats:", error);
-      // Set default values
-      if (this.totalChunks) this.totalChunks.textContent = "8";
-      if (this.uploadedDocs) this.uploadedDocs.textContent = "0";
-    }
-  }
-
-  updateStatsDisplay(stats) {
-    if (this.totalChunks)
-      this.totalChunks.textContent = stats.total_chunks || "8";
-    if (this.uploadedDocs)
-      this.uploadedDocs.textContent = stats.uploaded_documents || "0";
-  }
-
-  // ========== SEARCH COUNT ==========
-
-  incrementSearchCount() {
-    this.searchCountValue++;
-    this.updateSearchCount();
-    localStorage.setItem("searchCount", this.searchCountValue.toString());
-  }
-
-  updateSearchCount() {
-    if (this.searchCount) {
-      this.searchCount.textContent = this.searchCountValue;
-    }
-  }
-
-  // ========== CONNECTION MANAGEMENT ==========
-
-  async checkConnection() {
-    try {
-      const response = await fetch(`${this.API_BASE_URL}/api/health`);
-      this.isOnline = response.ok;
-      this.updateConnectionStatus();
-    } catch (error) {
-      this.isOnline = false;
-      this.updateConnectionStatus();
-    }
-  }
-
-  handleConnectionChange(online) {
-    this.isOnline = online;
-    this.updateConnectionStatus();
-
-    if (online) {
-      this.showToast("Connection restored", "success");
-    } else {
-      this.showToast("Working offline - some features limited", "warning");
-    }
-  }
-
-  updateConnectionStatus() {
-    // You can update a connection status indicator here
-    console.log(this.isOnline ? "✅ Online" : "🌐 Offline");
-  }
-
-  getFallbackResponse(error) {
-    if (!this.isOnline) {
-      return "I'm currently offline. Please check your internet connection and try again.";
-    }
-
-    if (error.message.includes("timeout")) {
-      return "The request timed out. Please try again in a moment.";
-    }
-
-    return "I'm having trouble connecting to the AI service right now. Please try again in a moment.";
-  }
-
-  // ========== NOTIFICATIONS ==========
-
-  showToast(message, type = "info") {
-    console.log(`📢 ${type.toUpperCase()}: ${message}`);
-
-    // Create toast element
-    const toast = document.createElement("div");
-    toast.className = `fixed top-4 right-4 px-4 py-2 rounded-lg text-white shadow-lg transform transition-all duration-300 z-50 ${
-      type === "success"
-        ? "bg-green-500"
-        : type === "warning"
-        ? "bg-orange-500"
-        : type === "error"
-        ? "bg-red-500"
-        : "bg-blue-500"
-    }`;
-    toast.textContent = message;
-    toast.style.transform = "translateX(400px)";
-
-    document.body.appendChild(toast);
-
-    // Animate in
-    setTimeout(() => {
-      toast.style.transform = "translateX(0)";
-    }, 100);
-
-    // Remove after 3 seconds
-    setTimeout(() => {
-      toast.style.transform = "translateX(400px)";
-      setTimeout(() => {
-        if (document.body.contains(toast)) {
-          document.body.removeChild(toast);
-        }
-      }, 300);
-    }, 3000);
-  }
-
-  showUploadResult(message, type) {
-    this.showToast(message, type);
-  }
-
-  // ========== CHAT MANAGEMENT ==========
-
-  async copyChatToClipboard() {
-    const chatText = this.chatHistory
-      .map((msg) => `${msg.sender === "user" ? "You" : "AI"}: ${msg.text}`)
-      .join("\n\n");
-
-    try {
-      await navigator.clipboard.writeText(chatText);
-      this.showToast("Chat copied to clipboard", "success");
-
-      // Visual feedback on button
-      if (this.copyChat) {
-        const originalHTML = this.copyChat.innerHTML;
-        this.copyChat.innerHTML = '<i class="fas fa-check"></i>';
-        setTimeout(() => {
-          this.copyChat.innerHTML = originalHTML;
-        }, 2000);
-      }
-    } catch (error) {
-      this.showToast("Failed to copy chat", "error");
+      themeIcon.classList.remove("fa-sun");
+      themeIcon.classList.add("fa-moon");
+      document.body.classList.remove("bg-slate-900");
+      document.body.classList.add(
+        "bg-gradient-to-br",
+        "from-slate-50",
+        "to-blue-50"
+      );
     }
   }
 
   clearChat() {
-    if (
-      !confirm(
-        "Are you sure you want to clear the chat history? This cannot be undone."
-      )
-    ) {
-      return;
+    const chatContainer = document.getElementById("chatContainer");
+    const welcomeCard = document.getElementById("welcomeCard");
+
+    // Remove all messages except the welcome card
+    while (chatContainer.firstChild) {
+      chatContainer.removeChild(chatContainer.firstChild);
     }
 
-    this.chatContainer.innerHTML = "";
+    // Re-add welcome card
+    if (welcomeCard) {
+      chatContainer.appendChild(welcomeCard);
+      welcomeCard.style.display = "block";
+    }
+
     this.chatHistory = [];
-    localStorage.removeItem("chatHistory");
+  }
 
-    // Show welcome message again
-    this.showWelcomeMessage();
+  copyChat() {
+    const chatText = this.chatHistory
+      .map(
+        (entry) =>
+          `${entry.sender === "user" ? "You" : "AI Assistant"}: ${
+            entry.message
+          }`
+      )
+      .join("\n");
 
-    this.showToast("Chat cleared", "success");
+    navigator.clipboard.writeText(chatText).then(() => {
+      const copyButton = document.getElementById("copyChat");
+      const originalHTML = copyButton.innerHTML;
+
+      copyButton.innerHTML = '<i class="fas fa-check text-sm"></i>';
+      copyButton.classList.add("copied");
+
+      setTimeout(() => {
+        copyButton.innerHTML = originalHTML;
+        copyButton.classList.remove("copied");
+      }, 2000);
+    });
+  }
+
+  showSettings() {
+    // Simple settings alert - in a real app this would open a modal
+    alert(
+      "Settings:\n- Dark mode: " +
+        (this.isDarkMode ? "On" : "Off") +
+        "\n- Voice input: Enabled\n- File upload: Enabled"
+    );
+  }
+
+  refreshStats() {
+    // Simulate stats refresh
+    const stats = [
+      "totalChunks",
+      "baseChunks",
+      "uploadedDocs",
+      "totalDocs",
+      "searchCount",
+    ];
+    stats.forEach((stat) => {
+      const element = document.getElementById(stat);
+      if (element) {
+        const current = parseInt(element.textContent);
+        const newValue = Math.min(current + Math.floor(Math.random() * 3), 99);
+        element.textContent = newValue;
+
+        // Add animation
+        element.classList.add("scale-110");
+        setTimeout(() => {
+          element.classList.remove("scale-110");
+        }, 300);
+      }
+    });
+  }
+
+  updateStats() {
+    const uploadedDocs = document.getElementById("uploadedDocs");
+    const totalDocs = document.getElementById("totalDocs");
+    const totalChunks = document.getElementById("totalChunks");
+
+    if (uploadedDocs && totalDocs && totalChunks) {
+      const currentUploaded = parseInt(uploadedDocs.textContent);
+      const currentTotal = parseInt(totalDocs.textContent);
+      const currentChunks = parseInt(totalChunks.textContent);
+
+      uploadedDocs.textContent = currentUploaded + 1;
+      totalDocs.textContent = currentTotal + 1;
+      totalChunks.textContent =
+        currentChunks + Math.floor(Math.random() * 5) + 1;
+    }
   }
 }
 
-// Fallback initialization
-if (
-  document.readyState === "interactive" ||
-  document.readyState === "complete"
-) {
-  window.aiCustomerService = new AICustomerService();
-}
+// Initialize the app when DOM is loaded
+document.addEventListener("DOMContentLoaded", () => {
+  new ChatApp();
+});
+
+// Export for use in other modules if needed
+window.ChatApp = ChatApp;
