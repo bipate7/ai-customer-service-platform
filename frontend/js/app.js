@@ -1,4 +1,4 @@
-// AI Customer Service Platform - Complete Working Version
+// AI Customer Service Platform - Fixed Welcome Message & Question Tabs
 document.addEventListener("DOMContentLoaded", function () {
   console.log("🚀 Starting AI Customer Service Platform...");
   window.aiCustomerService = new AICustomerService();
@@ -24,7 +24,8 @@ class AICustomerService {
       this.findDOMElements();
       this.setupEventListeners();
       await this.loadSavedData();
-      this.setupQuestionnaire();
+      this.setupQuestionTabs(); // Fixed: Call this separately
+      this.setupQuickQuestions(); // Fixed: Call this separately
       this.checkConnection();
 
       console.log("✅ AI Customer Service initialized successfully");
@@ -86,41 +87,80 @@ class AICustomerService {
     console.log("🎯 Setting up event listeners...");
 
     // Core Chat
-    this.sendButton?.addEventListener("click", () => this.sendMessage());
-    this.messageInput?.addEventListener("keypress", (e) => {
-      if (e.key === "Enter" && !e.shiftKey) {
-        e.preventDefault();
-        this.sendMessage();
-      }
-    });
+    if (this.sendButton) {
+      this.sendButton.addEventListener("click", () => this.sendMessage());
+    }
 
-    // Auto-resize textarea
-    this.messageInput?.addEventListener("input", () => {
-      this.autoResizeTextarea();
-    });
+    if (this.messageInput) {
+      this.messageInput.addEventListener("keypress", (e) => {
+        if (e.key === "Enter" && !e.shiftKey) {
+          e.preventDefault();
+          this.sendMessage();
+        }
+      });
+
+      // Auto-resize textarea
+      this.messageInput.addEventListener("input", () => {
+        this.autoResizeTextarea();
+      });
+    }
 
     // Actions
-    this.clearChatButton?.addEventListener("click", () => this.clearChat());
-    this.themeToggle?.addEventListener("click", () => this.toggleTheme());
-    this.uploadBtn?.addEventListener("click", () => this.openUploadModal());
-    this.copyChat?.addEventListener("click", () => this.copyChatToClipboard());
+    if (this.clearChatButton) {
+      this.clearChatButton.addEventListener("click", () => this.clearChat());
+    }
+    if (this.themeToggle) {
+      this.themeToggle.addEventListener("click", () => this.toggleTheme());
+    }
+    if (this.uploadBtn) {
+      this.uploadBtn.addEventListener("click", () => this.openUploadModal());
+    }
+    if (this.copyChat) {
+      this.copyChat.addEventListener("click", () => this.copyChatToClipboard());
+    }
 
-    // Questionnaire
-    this.questionnaireToggle?.addEventListener("click", () =>
-      this.toggleQuestionnaire()
-    );
+    // Questionnaire Toggle
+    if (this.questionnaireToggle) {
+      this.questionnaireToggle.addEventListener("click", () =>
+        this.toggleQuestionnaire()
+      );
+    }
 
     // Voice
-    this.voiceInputBtn?.addEventListener("click", () => this.startVoiceInput());
-    this.stopVoice?.addEventListener("click", () => this.stopVoiceInput());
+    if (this.voiceInputBtn) {
+      this.voiceInputBtn.addEventListener("click", () =>
+        this.startVoiceInput()
+      );
+    }
+    if (this.stopVoice) {
+      this.stopVoice.addEventListener("click", () => this.stopVoiceInput());
+    }
 
     // File Upload
-    this.closeModal?.addEventListener("click", () => this.closeUploadModal());
-    this.cancelUpload?.addEventListener("click", () => this.closeUploadModal());
-    this.browseBtn?.addEventListener("click", () => this.fileInput?.click());
-    this.fileInput?.addEventListener("change", (e) => this.handleFileSelect(e));
-    this.removeFile?.addEventListener("click", () => this.removeSelectedFile());
-    this.confirmUpload?.addEventListener("click", () => this.uploadFile());
+    if (this.closeModal) {
+      this.closeModal.addEventListener("click", () => this.closeUploadModal());
+    }
+    if (this.cancelUpload) {
+      this.cancelUpload.addEventListener("click", () =>
+        this.closeUploadModal()
+      );
+    }
+    if (this.browseBtn) {
+      this.browseBtn.addEventListener("click", () => this.fileInput?.click());
+    }
+    if (this.fileInput) {
+      this.fileInput.addEventListener("change", (e) =>
+        this.handleFileSelect(e)
+      );
+    }
+    if (this.removeFile) {
+      this.removeFile.addEventListener("click", () =>
+        this.removeSelectedFile()
+      );
+    }
+    if (this.confirmUpload) {
+      this.confirmUpload.addEventListener("click", () => this.uploadFile());
+    }
 
     // Network monitoring
     window.addEventListener("online", () => this.handleConnectionChange(true));
@@ -131,18 +171,48 @@ class AICustomerService {
     console.log("✅ Event listeners setup complete");
   }
 
-  setupQuestionnaire() {
-    // Question tabs
-    document.querySelectorAll(".question-tab").forEach((tab) => {
-      tab.addEventListener("click", () => this.handleQuestionTabClick(tab));
+  // FIXED: Separate setup for question tabs
+  setupQuestionTabs() {
+    console.log("🔘 Setting up question tabs...");
+
+    const questionTabs = document.querySelectorAll(".question-tab");
+    console.log(`Found ${questionTabs.length} question tabs`);
+
+    questionTabs.forEach((tab, index) => {
+      tab.addEventListener("click", (e) => {
+        e.preventDefault();
+        console.log(`Question tab ${index} clicked`);
+        this.handleQuestionTabClick(tab);
+      });
+
+      // Add visual feedback
+      tab.style.cursor = "pointer";
+      tab.style.transition = "all 0.2s ease";
     });
 
-    // Quick questions
-    document.querySelectorAll(".quick-question").forEach((question) => {
-      question.addEventListener("click", () =>
-        this.handleQuickQuestionClick(question)
-      );
+    console.log("✅ Question tabs setup complete");
+  }
+
+  // FIXED: Separate setup for quick questions
+  setupQuickQuestions() {
+    console.log("🔘 Setting up quick questions...");
+
+    const quickQuestions = document.querySelectorAll(".quick-question");
+    console.log(`Found ${quickQuestions.length} quick questions`);
+
+    quickQuestions.forEach((question, index) => {
+      question.addEventListener("click", (e) => {
+        e.preventDefault();
+        console.log(`Quick question ${index} clicked`);
+        this.handleQuickQuestionClick(question);
+      });
+
+      // Add visual feedback
+      question.style.cursor = "pointer";
+      question.style.transition = "all 0.2s ease";
     });
+
+    console.log("✅ Quick questions setup complete");
   }
 
   async loadSavedData() {
@@ -158,12 +228,15 @@ class AICustomerService {
       const savedHistory = localStorage.getItem("chatHistory");
       if (savedHistory) {
         this.chatHistory = JSON.parse(savedHistory);
-        if (this.chatHistory.length > 0) {
+        if (this.chatHistory.length > 0 && this.welcomeCard) {
           this.welcomeCard.style.display = "none";
           this.chatHistory.forEach((msg) => {
             this.addMessageToChat(msg.text, msg.sender, false);
           });
         }
+      } else {
+        // FIXED: Show welcome message if no history exists
+        this.showWelcomeMessage();
       }
 
       // Theme
@@ -182,6 +255,27 @@ class AICustomerService {
       console.log("✅ Saved data loaded");
     } catch (error) {
       console.warn("⚠️ Error loading saved data:", error);
+      // FIXED: Show welcome message even if loading fails
+      this.showWelcomeMessage();
+    }
+  }
+
+  // NEW: Show welcome message
+  showWelcomeMessage() {
+    console.log("👋 Showing welcome message");
+    if (this.welcomeCard) {
+      this.welcomeCard.style.display = "block";
+    }
+
+    // Add a welcome message from the bot if chat is empty
+    if (this.chatHistory.length === 0 && this.chatContainer) {
+      setTimeout(() => {
+        this.addMessageToChat(
+          "Hello! I'm your AI customer service assistant. I can help you with questions about our services, business hours, pricing, technical support, and more. How can I help you today?",
+          "bot",
+          true
+        );
+      }, 500);
     }
   }
 
@@ -201,11 +295,13 @@ class AICustomerService {
     this.addMessageToChat(message, "user");
 
     // Clear input
-    this.messageInput.value = "";
-    this.autoResizeTextarea();
+    if (this.messageInput) {
+      this.messageInput.value = "";
+      this.autoResizeTextarea();
+    }
 
     // Hide welcome card
-    if (this.welcomeCard?.style.display !== "none") {
+    if (this.welcomeCard) {
       this.welcomeCard.style.display = "none";
     }
 
@@ -234,11 +330,11 @@ class AICustomerService {
 
   async getAIResponse(message) {
     try {
-      // Try real API first
       const response = await fetch(`${this.API_BASE_URL}/api/chat`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          Accept: "application/json",
         },
         body: JSON.stringify({
           message: message,
@@ -249,7 +345,11 @@ class AICustomerService {
 
       if (response.ok) {
         const data = await response.json();
-        return data.response;
+        return (
+          data.response ||
+          data.message ||
+          "I received your message but didn't get a proper response from the AI."
+        );
       } else {
         throw new Error(`API error: ${response.status}`);
       }
@@ -290,33 +390,36 @@ class AICustomerService {
       }
     }
 
-    // Default response for unknown queries
-    return `I understand you're asking about "${message}". I'm an AI assistant trained to help with customer service inquiries. I can answer questions about our services, business hours, pricing, and more. Could you provide more specific details about what you need help with?`;
+    return `Thank you for your message! I understand you're asking about "${message}". I'm an AI assistant trained to help with customer service inquiries. I can answer questions about our services, business hours, pricing, technical support, and more. Could you provide more specific details about what you need help with?`;
   }
 
   addMessageToChat(message, sender, saveToHistory = true) {
-    if (!this.chatContainer) return;
+    if (!this.chatContainer) {
+      console.error("❌ Chat container not found");
+      return;
+    }
 
     const messageElement = document.createElement("div");
     messageElement.className = `flex items-end space-x-2 ${
       sender === "user" ? "justify-end" : "justify-start"
-    } message-entering`;
+    } message`;
+    messageElement.style.animation = "fadeInUp 0.3s ease-out";
 
     if (sender === "user") {
       messageElement.innerHTML = `
-                <div class="user-message px-4 py-3 max-w-xs md:max-w-md">
+                <div class="user-message px-4 py-3 max-w-xs md:max-w-md rounded-xl shadow-lg">
                     ${this.escapeHtml(message)}
                 </div>
-                <div class="w-8 h-8 bg-gradient-to-r from-blue-600 to-purple-600 rounded-xl flex items-center justify-center flex-shrink-0 shadow-lg">
+                <div class="w-8 h-8 bg-gradient-to-r from-blue-600 to-purple-600 rounded-full flex items-center justify-center flex-shrink-0 shadow-lg">
                     <i class="fas fa-user text-white text-xs"></i>
                 </div>
             `;
     } else {
       messageElement.innerHTML = `
-                <div class="w-8 h-8 bg-gradient-to-r from-blue-600 to-purple-600 rounded-xl flex items-center justify-center flex-shrink-0 shadow-lg">
+                <div class="w-8 h-8 bg-gradient-to-r from-blue-600 to-purple-600 rounded-full flex items-center justify-center flex-shrink-0 shadow-lg">
                     <i class="fas fa-robot text-white text-xs"></i>
                 </div>
-                <div class="bot-message px-4 py-3 max-w-xs md:max-w-md">
+                <div class="bot-message px-4 py-3 max-w-xs md:max-w-md rounded-xl shadow-lg">
                     ${this.formatBotResponse(message)}
                 </div>
             `;
@@ -368,32 +471,54 @@ class AICustomerService {
     }
   }
 
+  // FIXED: Improved question tab click handler
   handleQuestionTabClick(tab) {
+    console.log("🔄 Handling question tab click");
+
     // Add click animation
     tab.style.transform = "scale(0.95)";
     setTimeout(() => {
       tab.style.transform = "";
-    }, 150);
+    }, 200);
+
+    const question = tab.getAttribute("data-question");
+    console.log("Question from tab:", question);
 
     if (tab.id === "uploadDocBtn") {
       this.openUploadModal();
-    } else {
-      const question = tab.getAttribute("data-question");
-      if (question && this.messageInput) {
-        this.messageInput.value = question;
-        this.sendMessage();
+    } else if (question && this.messageInput) {
+      // Set the question in input and send it
+      this.messageInput.value = question;
+      this.autoResizeTextarea();
+      this.sendMessage();
+
+      // Hide welcome card
+      if (this.welcomeCard) {
+        this.welcomeCard.style.display = "none";
       }
+    } else {
+      console.error("❌ No question found on tab or message input missing");
     }
   }
 
+  // FIXED: Improved quick question click handler
   handleQuickQuestionClick(question) {
+    console.log("🔄 Handling quick question click");
+
     const questionText = question.getAttribute("data-question");
+    console.log("Quick question:", questionText);
+
     if (questionText && this.messageInput) {
       this.messageInput.value = questionText;
+      this.autoResizeTextarea();
       this.sendMessage();
       this.closeQuestionnaire();
+    } else {
+      console.error("❌ No question text found or message input missing");
     }
   }
+
+  // ... REST OF THE METHODS REMAIN THE SAME (Voice, File Upload, Utilities, etc.)
 
   // ========== VOICE INPUT ==========
 
@@ -404,14 +529,19 @@ class AICustomerService {
     }
 
     this.showToast("Starting voice input... Speak now", "info");
-    // Voice recognition implementation would go here
-    // For now, simulate voice input
+    if (this.voiceModal) {
+      this.voiceModal.classList.remove("hidden");
+    }
+
+    // Simulate voice input for demo
     setTimeout(() => {
       if (this.messageInput) {
-        this.messageInput.value = "This is a simulated voice input";
+        this.messageInput.value =
+          "I would like to know about your business hours";
         this.autoResizeTextarea();
+        this.showToast("Voice input received", "success");
       }
-    }, 1000);
+    }, 2000);
   }
 
   stopVoiceInput() {
@@ -751,15 +881,8 @@ class AICustomerService {
     this.chatHistory = [];
     localStorage.removeItem("chatHistory");
 
-    if (this.welcomeCard) {
-      this.welcomeCard.style.display = "block";
-    }
-
-    this.addMessageToChat(
-      "Hello! I'm your AI customer service assistant. How can I help you today?",
-      "bot",
-      false
-    );
+    // Show welcome message again
+    this.showWelcomeMessage();
 
     this.showToast("Chat cleared", "success");
   }
