@@ -1,4 +1,4 @@
-// AI Customer Service Platform - Frontend JavaScript with File Upload
+// AI Customer Service Platform - Frontend JavaScript with Enhanced Smooth Scrolling
 
 document.addEventListener("DOMContentLoaded", function () {
   // DOM Elements
@@ -140,10 +140,66 @@ document.addEventListener("DOMContentLoaded", function () {
     if (localStorage.getItem("darkMode") === "true") {
       enableDarkMode();
     }
+
+    // Initialize smooth scrolling
+    initializeSmoothScrolling();
   }
 
   function generateUserId() {
     return "user-" + Date.now() + "-" + Math.random().toString(36).substr(2, 9);
+  }
+
+  // Enhanced Smooth Scrolling Functionality
+  function initializeSmoothScrolling() {
+    // Add smooth scroll behavior to chat container
+    chatContainer.style.scrollBehavior = "smooth";
+
+    // Custom smooth scroll function for better performance
+    chatContainer.scrollTo = function (options) {
+      const start = chatContainer.scrollTop;
+      const change = options.top - start;
+      const increment = 20;
+      let currentTime = 0;
+      const duration = 300;
+
+      const animateScroll = function () {
+        currentTime += increment;
+        const val = Math.easeInOutQuad(currentTime, start, change, duration);
+        chatContainer.scrollTop = val;
+        if (currentTime < duration) {
+          setTimeout(animateScroll, increment);
+        }
+      };
+      animateScroll();
+    };
+
+    // Add easing function
+    Math.easeInOutQuad = function (t, b, c, d) {
+      t /= d / 2;
+      if (t < 1) return (c / 2) * t * t + b;
+      t--;
+      return (-c / 2) * (t * (t - 2) - 1) + b;
+    };
+  }
+
+  // Enhanced scroll to bottom with smooth animation
+  function scrollToBottom() {
+    if (chatContainer) {
+      const scrollHeight = chatContainer.scrollHeight;
+      const currentScroll = chatContainer.scrollTop;
+      const clientHeight = chatContainer.clientHeight;
+
+      // Only animate if we're not already at the bottom
+      if (scrollHeight - currentScroll - clientHeight > 100) {
+        chatContainer.scrollTo({
+          top: scrollHeight,
+          behavior: "smooth",
+        });
+      } else {
+        // Use custom smooth scroll for better performance
+        chatContainer.scrollTop = scrollHeight;
+      }
+    }
   }
 
   // Questionnaire Functions
@@ -161,6 +217,14 @@ document.addEventListener("DOMContentLoaded", function () {
       questionnaireOptions.scrollHeight + "px";
     toggleIcon.classList.add("rotate-180");
     isQuestionnaireOpen = true;
+
+    // Smooth scroll to questionnaire if needed
+    setTimeout(() => {
+      questionnaireOptions.scrollIntoView({
+        behavior: "smooth",
+        block: "nearest",
+      });
+    }, 100);
   }
 
   function closeQuestionnaire() {
@@ -230,7 +294,13 @@ document.addEventListener("DOMContentLoaded", function () {
 
   async function addMessageToChat(message, sender, saveToHistory = true) {
     const messageElement = document.createElement("div");
-    messageElement.classList.add("message", "flex", "items-end", "space-x-2");
+    messageElement.classList.add(
+      "message",
+      "flex",
+      "items-end",
+      "space-x-2",
+      "message-entering"
+    );
 
     if (sender === "user") {
       messageElement.classList.add("justify-end");
@@ -255,7 +325,11 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 
     chatContainer.appendChild(messageElement);
-    scrollToBottom();
+
+    // Enhanced smooth scrolling with delay for animation
+    setTimeout(() => {
+      scrollToBottom();
+    }, 50);
 
     // Save to chat history
     if (saveToHistory) {
@@ -270,15 +344,25 @@ document.addEventListener("DOMContentLoaded", function () {
     }
   }
 
-  // File Upload Functions (keep existing implementation)
+  // File Upload Functions
   function openUploadModal() {
     uploadModal.classList.remove("hidden");
     resetUploadForm();
+
+    // Smooth focus transition
+    setTimeout(() => {
+      uploadModal.style.opacity = "1";
+      uploadModal.style.transform = "scale(1)";
+    }, 10);
   }
 
   function closeUploadModal() {
-    uploadModal.classList.add("hidden");
-    resetUploadForm();
+    uploadModal.style.opacity = "0";
+    uploadModal.style.transform = "scale(0.95)";
+    setTimeout(() => {
+      uploadModal.classList.add("hidden");
+      resetUploadForm();
+    }, 300);
   }
 
   function resetUploadForm() {
@@ -425,27 +509,33 @@ document.addEventListener("DOMContentLoaded", function () {
     typingIndicator.classList.add("hidden");
   }
 
-  function scrollToBottom() {
-    chatContainer.scrollTop = chatContainer.scrollHeight;
-  }
-
   async function clearChat() {
     if (
       confirm(
         "Are you sure you want to clear the chat history? This cannot be undone."
       )
     ) {
-      chatContainer.innerHTML = "";
-      chatHistory = [];
-      localStorage.removeItem("chatHistory");
-      welcomeCard.style.display = "block";
+      // Smooth fade out animation
+      chatContainer.style.opacity = "0.5";
+      chatContainer.style.transform = "scale(0.98)";
 
-      // Add new welcome message
-      addMessageToChat(
-        "Hello! I'm your AI customer service assistant. How can I help you today?",
-        "bot",
-        false
-      );
+      setTimeout(() => {
+        chatContainer.innerHTML = "";
+        chatHistory = [];
+        localStorage.removeItem("chatHistory");
+        welcomeCard.style.display = "block";
+
+        // Reset styles
+        chatContainer.style.opacity = "1";
+        chatContainer.style.transform = "scale(1)";
+
+        // Add new welcome message
+        addMessageToChat(
+          "Hello! I'm your AI customer service assistant. How can I help you today?",
+          "bot",
+          false
+        );
+      }, 300);
     }
   }
 

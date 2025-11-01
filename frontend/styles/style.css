@@ -1,54 +1,92 @@
 /* Modern styles for the AI Customer Service Platform */
 
-/* Smooth scrolling for chat container */
-#chatContainer {
+/* Smooth scrolling for the entire page */
+html {
   scroll-behavior: smooth;
 }
 
 /* Custom scrollbar for chat container */
+#chatContainer {
+  scroll-behavior: smooth;
+  scrollbar-width: thin;
+  scrollbar-color: #cbd5e1 #f8fafc;
+}
+
 #chatContainer::-webkit-scrollbar {
-  width: 6px;
+  width: 8px;
 }
 
 #chatContainer::-webkit-scrollbar-track {
   background: #f8fafc;
+  border-radius: 4px;
 }
 
 #chatContainer::-webkit-scrollbar-thumb {
   background: #cbd5e1;
-  border-radius: 3px;
+  border-radius: 4px;
+  transition: background 0.3s ease;
 }
 
 #chatContainer::-webkit-scrollbar-thumb:hover {
   background: #94a3b8;
 }
 
-/* Message animations */
+/* Enhanced smooth scrolling for chat container */
+.custom-scrollbar {
+  scroll-behavior: smooth;
+  transition: scroll-behavior 0.3s ease;
+}
+
+/* Message animations with smooth entrance */
 .message {
-  animation: fadeInUp 0.3s ease-out;
+  animation: fadeInUp 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  transform-origin: center bottom;
 }
 
 @keyframes fadeInUp {
   from {
     opacity: 0;
-    transform: translateY(10px);
+    transform: translateY(20px) scale(0.95);
   }
   to {
     opacity: 1;
-    transform: translateY(0);
+    transform: translateY(0) scale(1);
   }
 }
 
-/* User message styling */
+/* User message styling with smooth transitions */
 .user-message {
   background: linear-gradient(135deg, #3b82f6, #6366f1);
   color: white;
   border-radius: 18px 18px 4px 18px;
   box-shadow: 0 4px 12px -2px rgba(59, 130, 246, 0.3);
   backdrop-filter: blur(10px);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
 }
 
-/* Bot message styling */
+.user-message::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.2),
+    transparent
+  );
+  transition: left 0.6s ease;
+}
+
+.user-message:hover::before {
+  left: 100%;
+}
+
+/* Bot message styling with smooth transitions */
 .bot-message {
   background: rgba(248, 250, 252, 0.8);
   backdrop-filter: blur(10px);
@@ -56,11 +94,12 @@
   border-radius: 18px 18px 18px 4px;
   box-shadow: 0 2px 8px -1px rgba(0, 0, 0, 0.1);
   border: 1px solid rgba(226, 232, 240, 0.5);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-/* Enhanced Question Tabs Styling */
+/* Enhanced Question Tabs Styling with smooth animations */
 .question-tabs-container {
-  animation: slideInUp 0.6s ease-out;
+  animation: slideInUp 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94);
 }
 
 .question-tab {
@@ -71,6 +110,7 @@
   position: relative;
   overflow: hidden;
   backdrop-filter: blur(10px);
+  transform-origin: center;
 }
 
 .question-tab::before {
@@ -86,7 +126,7 @@
     rgba(255, 255, 255, 0.4),
     transparent
   );
-  transition: left 0.5s;
+  transition: left 0.5s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .question-tab:hover::before {
@@ -95,59 +135,79 @@
 
 .question-tab:active {
   transform: scale(0.95);
+  transition: transform 0.1s ease;
 }
 
 .question-tab:hover {
   box-shadow: 0 8px 25px -8px rgba(0, 0, 0, 0.15);
-  transform: translateY(-2px);
+  transform: translateY(-2px) scale(1.02);
 }
 
-/* Quick Questions Styling */
+/* Quick Questions Styling with smooth animations */
 .quick-question {
   cursor: pointer;
   border: none;
-  transition: all 0.2s ease-in-out;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   backdrop-filter: blur(10px);
+  transform-origin: center;
 }
 
 .quick-question:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px -2px rgba(0, 0, 0, 0.1);
+  transform: translateY(-2px) scale(1.05);
+  box-shadow: 0 4px 12px -2px rgba(0, 0, 0, 0.15);
 }
 
-/* Welcome message styling */
+/* Welcome message styling with smooth entrance */
 #welcomeCard {
-  animation: fadeIn 0.8s ease-out;
+  animation: fadeIn 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94);
 }
 
 /* Enhanced animations */
 @keyframes slideInUp {
   from {
     opacity: 0;
-    transform: translateY(30px);
+    transform: translateY(30px) scale(0.95);
   }
   to {
     opacity: 1;
-    transform: translateY(0);
+    transform: translateY(0) scale(1);
   }
 }
 
 @keyframes fadeIn {
   from {
     opacity: 0;
+    transform: scale(0.95);
   }
   to {
     opacity: 1;
+    transform: scale(1);
   }
 }
 
 /* Questionnaire toggle animation */
 #questionnaireOptions {
-  transition: all 0.3s ease-in-out;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  transform-origin: top;
+}
+
+#questionnaireOptions:not(.hidden) {
+  animation: slideDown 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
 }
 
 #toggleIcon {
-  transition: transform 0.3s ease-in-out;
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .rotate-180 {
@@ -158,16 +218,19 @@
 .dark-mode {
   background: linear-gradient(135deg, #0f172a, #1e293b);
   color: #e2e8f0;
+  transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .dark-mode header {
   background-color: rgba(30, 41, 59, 0.8);
   border-bottom: 1px solid #334155;
+  transition: all 0.3s ease;
 }
 
 .dark-mode .bg-white {
   background-color: rgba(30, 41, 59, 0.8);
   color: #e2e8f0;
+  transition: all 0.3s ease;
 }
 
 .dark-mode .text-slate-800 {
@@ -185,6 +248,7 @@
 .dark-mode .bg-slate-100 {
   background-color: #334155;
   color: #e2e8f0;
+  transition: all 0.3s ease;
 }
 
 .dark-mode .bg-slate-100:hover {
@@ -204,6 +268,7 @@
 .dark-mode .question-tab {
   border-color: #374151;
   color: #e5e7eb;
+  transition: all 0.3s ease;
 }
 
 .dark-mode .question-tab.bg-gradient-to-br {
@@ -223,43 +288,47 @@
 .dark-mode .quick-question {
   background-color: #334155;
   color: #e2e8f0;
+  transition: all 0.3s ease;
 }
 
 .dark-mode .quick-question:hover {
   background-color: #475569;
 }
 
-/* Input focus styles */
+/* Input focus styles with smooth transitions */
 #messageInput:focus {
   outline: none;
   box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
   backdrop-filter: blur(10px);
+  transform: translateY(-1px);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-/* Button hover effects */
+/* Button hover effects with smooth scaling */
 #sendButton:hover {
-  transform: scale(1.05);
-  transition: transform 0.2s;
+  transform: scale(1.1) rotate(5deg);
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 /* Group hover effects for question tabs */
 .question-tab .group-hover\:scale-110 {
-  transition: transform 0.3s ease-in-out;
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 /* Enhanced gradient backgrounds for question tabs */
 .bg-gradient-to-br {
   background-size: 200% 200%;
-  transition: background-position 0.5s ease;
+  transition: background-position 0.5s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .question-tab:hover.bg-gradient-to-br {
   background-position: 100% 100%;
 }
 
-/* Professional shadow effects */
+/* Professional shadow effects with smooth transitions */
 .question-tab {
   box-shadow: 0 2px 10px -3px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .question-tab:hover {
@@ -272,7 +341,8 @@
 #uploadBtn,
 #clearChat,
 #themeToggle,
-.quick-question {
+.quick-question,
+#questionnaireToggle {
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
@@ -281,6 +351,7 @@
 .quick-question:focus {
   outline: 2px solid #3b82f6;
   outline-offset: 2px;
+  transition: outline-offset 0.2s ease;
 }
 
 /* Responsive adjustments */
@@ -366,22 +437,72 @@
   outline: 2px solid #3b82f6;
   outline-offset: 2px;
   border-radius: 0.75rem;
+  transition: outline-offset 0.2s ease;
 }
 
-/* Glass morphism effects */
+/* Glass morphism effects with smooth transitions */
 .backdrop-blur-md {
   backdrop-filter: blur(12px);
+  transition: backdrop-filter 0.3s ease;
 }
 
 .bg-white\/80 {
   background-color: rgba(255, 255, 255, 0.8);
+  transition: background-color 0.3s ease;
 }
 
-/* Smooth color transitions */
+/* Smooth color transitions for all elements */
 .question-tab,
-.quick-question {
+.quick-question,
+#sendButton,
+#uploadBtn,
+#clearChat,
+#themeToggle {
   transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1),
     box-shadow 0.3s cubic-bezier(0.4, 0, 0.2, 1),
     background-color 0.3s cubic-bezier(0.4, 0, 0.2, 1),
-    border-color 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    border-color 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+    color 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Smooth scrolling helper class */
+.smooth-scroll {
+  scroll-behavior: smooth;
+  transition: scroll-behavior 0.3s ease;
+}
+
+/* Loading animation for better UX */
+@keyframes pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+.loading {
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+/* Enhanced message entrance animations */
+.message-entering {
+  animation: messageSlideIn 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94) both;
+}
+
+@keyframes messageSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* Smooth background transitions */
+.bg-gradient-to-br {
+  transition: background 0.5s cubic-bezier(0.4, 0, 0.2, 1);
 }
