@@ -9,6 +9,7 @@ document.addEventListener("DOMContentLoaded", function () {
   const themeToggle = document.getElementById("themeToggle");
   const typingIndicator = document.getElementById("typingIndicator");
   const welcomeCard = document.getElementById("welcomeCard");
+  const inputQuestionTabs = document.getElementById("inputQuestionTabs");
 
   // File Upload Elements
   const uploadBtn = document.getElementById("uploadBtn");
@@ -51,6 +52,13 @@ document.addEventListener("DOMContentLoaded", function () {
     }
   });
 
+  // Input focus/blur events for question tabs
+  messageInput.addEventListener("focus", showInputQuestionTabs);
+  messageInput.addEventListener("blur", function () {
+    // Delay hiding to allow for tab clicks
+    setTimeout(hideInputQuestionTabs, 200);
+  });
+
   clearChatButton.addEventListener("click", clearChat);
   themeToggle.addEventListener("click", toggleTheme);
 
@@ -63,8 +71,10 @@ document.addEventListener("DOMContentLoaded", function () {
   removeFile.addEventListener("click", removeSelectedFile);
   confirmUpload.addEventListener("click", uploadFile);
 
-  // Question tabs functionality
-  const questionTabs = document.querySelectorAll(".question-tab");
+  // Question tabs functionality - both welcome and input tabs
+  const questionTabs = document.querySelectorAll(
+    ".question-tab, .quick-question-tab"
+  );
 
   questionTabs.forEach((tab) => {
     tab.addEventListener("click", function () {
@@ -78,12 +88,17 @@ document.addEventListener("DOMContentLoaded", function () {
         openUploadModal();
       } else {
         const question = this.getAttribute("data-question");
-        messageInput.value = question;
-        sendMessage();
+        if (question) {
+          messageInput.value = question;
+          hideInputQuestionTabs();
 
-        // Hide welcome card after clicking a question
-        if (welcomeCard) {
-          welcomeCard.style.display = "none";
+          // Hide welcome card after clicking a question
+          if (welcomeCard && welcomeCard.style.display !== "none") {
+            welcomeCard.style.display = "none";
+          }
+
+          // Auto-send the question
+          sendMessage();
         }
       }
     });
@@ -93,6 +108,13 @@ document.addEventListener("DOMContentLoaded", function () {
   messageInput.addEventListener("input", function () {
     this.style.height = "auto";
     this.style.height = this.scrollHeight + "px";
+
+    // Hide question tabs when user starts typing
+    if (this.value.trim() !== "") {
+      hideInputQuestionTabs();
+    } else {
+      showInputQuestionTabs();
+    }
   });
 
   // Functions
@@ -119,6 +141,9 @@ document.addEventListener("DOMContentLoaded", function () {
     if (localStorage.getItem("darkMode") === "true") {
       enableDarkMode();
     }
+
+    // Initialize input question tabs state
+    hideInputQuestionTabs();
   }
 
   function generateUserId() {
@@ -159,9 +184,12 @@ document.addEventListener("DOMContentLoaded", function () {
     messageInput.style.height = "auto";
 
     // Hide welcome card after first message
-    if (welcomeCard.style.display !== "none") {
+    if (welcomeCard && welcomeCard.style.display !== "none") {
       welcomeCard.style.display = "none";
     }
+
+    // Hide question tabs after sending
+    hideInputQuestionTabs();
 
     // Show typing indicator
     showTypingIndicator();
@@ -220,6 +248,17 @@ document.addEventListener("DOMContentLoaded", function () {
       chatHistory.push(messageData);
       localStorage.setItem("chatHistory", JSON.stringify(chatHistory));
     }
+  }
+
+  // Input Question Tabs Functions
+  function showInputQuestionTabs() {
+    if (messageInput.value.trim() === "") {
+      inputQuestionTabs.classList.remove("hidden");
+    }
+  }
+
+  function hideInputQuestionTabs() {
+    inputQuestionTabs.classList.add("hidden");
   }
 
   // File Upload Functions
@@ -390,7 +429,11 @@ document.addEventListener("DOMContentLoaded", function () {
       chatContainer.innerHTML = "";
       chatHistory = [];
       localStorage.removeItem("chatHistory");
-      welcomeCard.style.display = "block";
+
+      // Show welcome card again
+      if (welcomeCard) {
+        welcomeCard.style.display = "block";
+      }
 
       // Add new welcome message
       addMessageToChat(
@@ -398,6 +441,9 @@ document.addEventListener("DOMContentLoaded", function () {
         "bot",
         false
       );
+
+      // Reset input question tabs
+      hideInputQuestionTabs();
     }
   }
 

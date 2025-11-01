@@ -60,7 +60,8 @@
   animation: slideInUp 0.6s ease-out;
 }
 
-.question-tab {
+.question-tab,
+.quick-question-tab {
   cursor: pointer;
   border: none;
   font-weight: 600;
@@ -69,7 +70,8 @@
   overflow: hidden;
 }
 
-.question-tab::before {
+.question-tab::before,
+.quick-question-tab::before {
   content: "";
   position: absolute;
   top: 0;
@@ -85,11 +87,13 @@
   transition: left 0.5s;
 }
 
-.question-tab:hover::before {
+.question-tab:hover::before,
+.quick-question-tab:hover::before {
   left: 100%;
 }
 
-.question-tab:active {
+.question-tab:active,
+.quick-question-tab:active {
   transform: scale(0.95);
 }
 
@@ -98,9 +102,32 @@
   transform: translateY(-2px);
 }
 
+.quick-question-tab:hover {
+  box-shadow: 0 4px 12px -4px rgba(0, 0, 0, 0.15);
+  transform: translateY(-1px);
+}
+
 /* Welcome message styling */
 #welcomeCard {
   animation: fadeIn 0.8s ease-out;
+}
+
+/* Input Question Tabs Styling */
+#inputQuestionTabs {
+  animation: slideInDown 0.3s ease-out;
+  background: #fafbfc;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+@keyframes slideInDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 /* Enhanced animations */
@@ -171,7 +198,8 @@
 }
 
 /* Dark mode support for question tabs */
-.dark-mode .question-tab {
+.dark-mode .question-tab,
+.dark-mode .quick-question-tab {
   border-color: #374151;
   color: #e5e7eb;
 }
@@ -185,8 +213,27 @@
   border-color: #6b7280;
 }
 
-.dark-mode .question-tab:hover {
+.dark-mode .quick-question-tab {
+  background-color: #374151 !important;
+  color: #e5e7eb !important;
+}
+
+.dark-mode .quick-question-tab:hover {
+  background-color: #4b5563 !important;
+}
+
+.dark-mode .question-tab:hover,
+.dark-mode .quick-question-tab:hover {
   box-shadow: 0 8px 25px -8px rgba(0, 0, 0, 0.3);
+}
+
+.dark-mode #inputQuestionTabs {
+  background: #1f2937;
+  border-color: #374151;
+}
+
+.dark-mode #inputQuestionTabs .text-gray-500 {
+  color: #9ca3af;
 }
 
 /* Input focus styles */
@@ -230,8 +277,17 @@
   box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.15);
 }
 
+.quick-question-tab {
+  box-shadow: 0 1px 3px -1px rgba(0, 0, 0, 0.1);
+}
+
+.quick-question-tab:hover {
+  box-shadow: 0 4px 12px -4px rgba(0, 0, 0, 0.15);
+}
+
 /* Smooth transitions for all interactive elements */
 .question-tab,
+.quick-question-tab,
 #sendButton,
 #uploadBtn,
 #clearChat,
@@ -240,7 +296,8 @@
 }
 
 /* Focus states for accessibility */
-.question-tab:focus {
+.question-tab:focus,
+.quick-question-tab:focus {
   outline: 2px solid #3b82f6;
   outline-offset: 2px;
 }
@@ -256,7 +313,8 @@
   }
 }
 
-.question-tab.loading {
+.question-tab.loading,
+.quick-question-tab.loading {
   animation: pulse-glow 2s infinite;
 }
 
@@ -278,6 +336,16 @@
 
   #chatContainer {
     height: 50vh;
+  }
+
+  /* Quick question tabs responsive */
+  #inputQuestionTabs .flex-wrap {
+    gap: 0.5rem;
+  }
+
+  .quick-question-tab {
+    padding: 0.5rem 0.75rem;
+    font-size: 0.75rem;
   }
 }
 
@@ -304,6 +372,17 @@
   .question-tab {
     padding: 1rem;
   }
+
+  /* Quick question tabs mobile */
+  #inputQuestionTabs .flex-wrap {
+    justify-content: center;
+  }
+
+  .quick-question-tab {
+    flex: 1 0 calc(50% - 0.5rem);
+    min-width: calc(50% - 0.5rem);
+    text-align: center;
+  }
 }
 
 @media (max-width: 480px) {
@@ -318,10 +397,17 @@
   .question-tab .text-2xl {
     font-size: 1.25rem;
   }
+
+  /* Quick question tabs small mobile */
+  .quick-question-tab {
+    flex: 1 0 100%;
+    min-width: 100%;
+  }
 }
 
 /* Enhanced text selection */
-.question-tab {
+.question-tab,
+.quick-question-tab {
   user-select: none;
   -webkit-user-select: none;
   -moz-user-select: none;
@@ -329,14 +415,16 @@
 }
 
 /* Improved focus visibility for keyboard navigation */
-.question-tab:focus-visible {
+.question-tab:focus-visible,
+.quick-question-tab:focus-visible {
   outline: 2px solid #3b82f6;
   outline-offset: 2px;
   border-radius: 0.75rem;
 }
 
 /* Smooth color transitions */
-.question-tab {
+.question-tab,
+.quick-question-tab {
   transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1),
     box-shadow 0.3s cubic-bezier(0.4, 0, 0.2, 1),
     background-color 0.3s cubic-bezier(0.4, 0, 0.2, 1),
@@ -366,4 +454,60 @@
 
 .question-tab.bg-gradient-to-br.from-indigo-50:hover {
   background: linear-gradient(135deg, #e0e7ff, #c7d2fe);
+}
+
+/* Quick question tab hover states */
+.quick-question-tab.bg-blue-50:hover {
+  background-color: #dbeafe !important;
+}
+
+.quick-question-tab.bg-green-50:hover {
+  background-color: #dcfce7 !important;
+}
+
+.quick-question-tab.bg-purple-50:hover {
+  background-color: #f3e8ff !important;
+}
+
+.quick-question-tab.bg-orange-50:hover {
+  background-color: #ffedd5 !important;
+}
+
+.quick-question-tab.bg-indigo-50:hover {
+  background-color: #e0e7ff !important;
+}
+
+/* Quick question tab text color hover states */
+.quick-question-tab.text-blue-700:hover {
+  color: #1d4ed8 !important;
+}
+
+.quick-question-tab.text-green-700:hover {
+  color: #15803d !important;
+}
+
+.quick-question-tab.text-purple-700:hover {
+  color: #7e22ce !important;
+}
+
+.quick-question-tab.text-orange-700:hover {
+  color: #c2410c !important;
+}
+
+.quick-question-tab.text-indigo-700:hover {
+  color: #3730a3 !important;
+}
+
+/* Input question tabs container animation */
+#inputQuestionTabs {
+  transition: all 0.3s ease-in-out;
+}
+
+/* Hide/show animation for input question tabs */
+#inputQuestionTabs.hidden {
+  display: none;
+}
+
+#inputQuestionTabs:not(.hidden) {
+  display: block;
 }
