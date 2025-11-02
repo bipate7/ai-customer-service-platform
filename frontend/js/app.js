@@ -7,6 +7,10 @@ class ChatApp {
     this.apiService = new APIService();
     this.realTimeTyping = new RealTimeTyping();
     this.userSession = this.initializeUserSession();
+
+    // PHASE 7: Initialize Security Services
+    this.securityService = window.securityService || null;
+    this.performanceMonitor = window.performanceMonitor || null;
     this.init();
   }
 
@@ -33,10 +37,152 @@ class ChatApp {
     this.setupFileUpload();
     this.setupVoiceInput();
     this.setupModelSelector();
+    this.setupSecurityFeatures(); // NEW: Security setup
     this.loadSessionData();
 
     // Initialize analytics
     this.trackSessionStart();
+
+    // PHASE 7: Security audit on init
+    this.performSecurityAudit();
+  }
+
+  // PHASE 7: Security Features Setup
+  setupSecurityFeatures() {
+    // Security button in header
+    const securityBtn = document.getElementById("securityBtn");
+    if (securityBtn) {
+      securityBtn.addEventListener("click", () => {
+        this.showSecurityModal();
+      });
+    }
+
+    // Close security modal
+    const closeSecurityModal = document.getElementById("closeSecurityModal");
+    if (closeSecurityModal) {
+      closeSecurityModal.addEventListener("click", () => {
+        this.hideSecurityModal();
+      });
+    }
+
+    // Initialize security monitoring
+    this.initializeSecurityMonitoring();
+  }
+
+  initializeSecurityMonitoring() {
+    if (this.securityService) {
+      // Set up session security
+      this.securityService.setupSessionSecurity();
+
+      // Set up API rate limiting
+      this.apiRateLimiter = this.securityService.setupAPIRateLimiting();
+    }
+  }
+
+  // PHASE 7: Security Validation Methods
+  validateMessageSecurity(message) {
+    if (!this.securityService) return true;
+
+    // Check message length
+    if (!this.securityService.validateMessage(message)) {
+      this.showNotification(
+        "Message too long. Please shorten your message.",
+        "warning"
+      );
+      return false;
+    }
+
+    // Check for suspicious content
+    const sanitized = this.securityService.sanitizeInput(message);
+    if (sanitized !== message) {
+      console.warn("Input sanitization applied to message");
+    }
+
+    return true;
+  }
+
+  checkRateLimit(endpoint) {
+    if (!this.apiRateLimiter) return true;
+    return this.apiRateLimiter.canMakeRequest(endpoint);
+  }
+
+  // PHASE 7: Security Modal
+  showSecurityModal() {
+    const securityModal = document.getElementById("securityModal");
+    if (securityModal) {
+      securityModal.classList.remove("hidden");
+    }
+  }
+
+  hideSecurityModal() {
+    const securityModal = document.getElementById("securityModal");
+    if (securityModal) {
+      securityModal.classList.add("hidden");
+    }
+  }
+
+  // PHASE 7: Security Audit
+  performSecurityAudit() {
+    if (this.securityService) {
+      const audit = this.securityService.performSecurityAudit();
+
+      if (window.APP_CONFIG?.ENVIRONMENT === "development") {
+        console.log("Security Audit Results:", audit);
+      }
+
+      // Log any security issues
+      if (audit.issues.length > 0) {
+        console.warn("Security issues detected:", audit.issues);
+      }
+
+      if (audit.warnings.length > 0) {
+        console.warn("Security warnings:", audit.warnings);
+      }
+
+      this.trackInteraction("security_audit", audit);
+    }
+  }
+
+  // PHASE 7: Data Anonymization for Privacy
+  anonymizeAnalyticsData(data) {
+    const anonymized = { ...data };
+
+    // Remove or hash potentially identifiable information
+    if (anonymized.sessionId) {
+      anonymized.sessionId = this.hashData(anonymized.sessionId);
+    }
+
+    // Remove user-specific data
+    delete anonymized.userAgent;
+    delete anonymized.url;
+
+    return anonymized;
+  }
+
+  hashData(data) {
+    // Simple hash function for anonymization
+    let hash = 0;
+    for (let i = 0; i < data.length; i++) {
+      const char = data.charCodeAt(i);
+      hash = (hash << 5) - hash + char;
+      hash = hash & hash; // Convert to 32-bit integer
+    }
+    return "user_" + Math.abs(hash).toString(36);
+  }
+
+  // PHASE 7: Enhanced Session Management with Security
+  validateSessionData(sessionData) {
+    // Basic validation of session data structure
+    if (!sessionData || typeof sessionData !== "object") return false;
+    if (!sessionData.sessionId || typeof sessionData.sessionId !== "string")
+      return false;
+    if (
+      !sessionData.startTime ||
+      isNaN(new Date(sessionData.startTime).getTime())
+    )
+      return false;
+
+    return true;
   }
 
   setupEventListeners() {
@@ -361,12 +507,26 @@ class ChatApp {
     });
   }
 
-  // PHASE 7: Enhanced Send Message with Multi-Model Support
+  // PHASE 7: Enhanced Send Message with Security
   async sendMessage() {
     const messageInput = document.getElementById("messageInput");
     const message = messageInput.value.trim();
 
     if (!message) return;
+
+    // PHASE 7: Security validation
+    if (!this.validateMessageSecurity(message)) {
+      return;
+    }
+
+    // PHASE 7: Rate limiting check
+    if (!this.checkRateLimit("chat")) {
+      this.showNotification(
+        "Please wait a moment before sending another message.",
+        "warning"
+      );
+      return;
+    }
 
     // Add user message to chat
     this.addMessageToChat(message, "user");
@@ -384,14 +544,21 @@ class ChatApp {
       const typingType = this.detectTypingType(message);
       this.realTimeTyping.showTypingIndicator(typingType);
 
+      // PHASE 7: Security - Sanitize input before sending
+      const sanitizedMessage = this.securityService
+        ? this.securityService.sanitizeInput(message)
+        : message;
+
       // PHASE 7: Analyze sentiment
-      const sentiment = await this.apiService.analyzeSentiment(message);
+      const sentiment = await this.apiService.analyzeSentiment(
+        sanitizedMessage
+      );
 
       // PHASE 7: Get conversation context
       const context = this.apiService.getConversationContext();
 
       // PHASE 7: Enhanced chat with multi-model support
-      const response = await this.apiService.chat(message, context, {
+      const response = await this.apiService.chat(sanitizedMessage, context, {
         modelType: this.userSession.preferredModel,
       });
 
@@ -404,18 +571,24 @@ class ChatApp {
         response.modelUsed
       );
 
-      // PHASE 7: Track successful interaction
+      // PHASE 7: Track successful interaction with security
       this.trackInteraction("message_sent", {
         model: response.modelUsed,
         sentiment: sentiment?.label,
         length: message.length,
+        security_checked: true,
       });
     } catch (error) {
       this.realTimeTyping.hideTypingIndicator();
+
+      // PHASE 7: Enhanced error handling with security context
       this.handleError("Failed to get response. Please try again.", error);
 
-      // PHASE 7: Track error
-      this.trackInteraction("message_error", { error: error.message });
+      // PHASE 7: Track error with security context
+      this.trackInteraction("message_error", {
+        error: error.message,
+        security_checked: true,
+      });
     }
 
     this.saveSessionData();
@@ -558,9 +731,17 @@ class ChatApp {
     chatContainer.scrollTop = chatContainer.scrollHeight;
   }
 
-  // PHASE 7: Enhanced error handling
+  // PHASE 7: Enhanced error handling with Security
   handleError(message, error) {
     console.error("Chat Error:", error);
+
+    // PHASE 7: Track error with performance monitoring
+    if (this.performanceMonitor) {
+      this.performanceMonitor.trackError(error, {
+        context: "chat_operation",
+        sessionId: this.userSession.sessionId,
+      });
+    }
 
     // Show user-friendly error
     this.showNotification(message, "error");
@@ -571,7 +752,7 @@ class ChatApp {
       "bot"
     );
 
-    // PHASE 7: Fallback to fast model if primary fails
+    // PHASE 7: Enhanced fallback strategy
     if (this.userSession.preferredModel === "PRIMARY") {
       this.userSession.preferredModel = "FAST";
       this.showNotification(
@@ -579,6 +760,13 @@ class ChatApp {
         "info"
       );
       this.selectModel("FAST");
+
+      // Track model fallback
+      this.trackInteraction("model_fallback", {
+        from: "PRIMARY",
+        to: "FAST",
+        reason: "error_recovery",
+      });
     }
   }
 
@@ -612,7 +800,7 @@ class ChatApp {
     }, 3000);
   }
 
-  // PHASE 7: Analytics and Tracking
+  // PHASE 7: Enhanced Analytics with Security Context
   trackSessionStart() {
     this.trackInteraction("session_start", {
       sessionId: this.userSession.sessionId,
@@ -627,21 +815,39 @@ class ChatApp {
       event,
       sessionId: this.userSession.sessionId,
       timestamp: new Date().toISOString(),
+      userAgent: navigator.userAgent,
+      url: window.location.href,
+      environment: window.APP_CONFIG.ENVIRONMENT,
       ...properties,
     };
 
-    // In a real app, send to analytics service
-    console.log("Analytics Event:", interactionData);
+    // PHASE 7: Performance monitoring integration
+    if (this.performanceMonitor) {
+      this.performanceMonitor.trackInteraction({
+        type: event,
+        timestamp: interactionData.timestamp,
+        data: properties,
+      });
+    }
 
-    // Store locally for debugging
+    // In a real app, send to analytics service
+    if (window.APP_CONFIG.ENVIRONMENT === "development") {
+      console.log("Analytics Event:", interactionData);
+    }
+
+    // Store locally for debugging (with security consideration)
     try {
       const analyticsLog = JSON.parse(
         localStorage.getItem("ai_chat_analytics") || "[]"
       );
-      analyticsLog.push(interactionData);
+
+      // PHASE 7: Anonymize sensitive data before storage
+      const anonymizedData = this.anonymizeAnalyticsData(interactionData);
+      analyticsLog.push(anonymizedData);
+
       localStorage.setItem(
         "ai_chat_analytics",
-        JSON.stringify(analyticsLog.slice(-100))
+        JSON.stringify(analyticsLog.slice(-100)) // Keep only last 100 entries
       );
     } catch (error) {
       console.warn("Analytics storage failed:", error);
@@ -654,15 +860,23 @@ class ChatApp {
       const saved = localStorage.getItem("ai_chat_session");
       if (saved) {
         const sessionData = JSON.parse(saved);
-        this.userSession = { ...this.userSession, ...sessionData };
 
-        // Restore selected model
-        if (sessionData.preferredModel) {
-          this.selectModel(sessionData.preferredModel);
+        // PHASE 7: Validate session data
+        if (this.validateSessionData(sessionData)) {
+          this.userSession = { ...this.userSession, ...sessionData };
+
+          // Restore selected model
+          if (sessionData.preferredModel) {
+            this.selectModel(sessionData.preferredModel);
+          }
+        } else {
+          console.warn("Invalid session data detected, using fresh session");
         }
       }
     } catch (error) {
       console.warn("Failed to load session data:", error);
+      // PHASE 7: Track security issue
+      this.trackInteraction("session_load_failed", { error: error.message });
     }
   }
 
@@ -722,23 +936,33 @@ class ChatApp {
     );
   }
 
+  // PHASE 7: Enhanced File Upload with Security
   handleFileSelect(event) {
     const file = event.target.files[0];
     if (!file) return;
 
-    // Use config for file validation
-    const validation = this.apiService.config?.validateFile?.(file) || {
-      isValid:
-        file.size <=
-        (window.APP_CONFIG?.SECURITY?.MAX_FILE_SIZE || 10 * 1024 * 1024),
-      errors: [],
-    };
+    // PHASE 7: Enhanced security validation
+    const validation = this.securityService
+      ? this.securityService.validateFile(file)
+      : this.apiService.config?.validateFile?.(file) || {
+          isValid:
+            file.size <=
+            (window.APP_CONFIG?.SECURITY?.MAX_FILE_SIZE || 10 * 1024 * 1024),
+          errors: [],
+        };
 
     if (!validation.isValid) {
       this.showUploadResult(
-        validation.errors[0] || "File validation failed",
+        validation.errors[0] || "File validation failed for security reasons",
         "error"
       );
+
+      // PHASE 7: Track security violation
+      this.trackInteraction("file_validation_failed", {
+        filename: file.name,
+        size: file.size,
+        errors: validation.errors,
+      });
       return;
     }
 
@@ -752,6 +976,13 @@ class ChatApp {
     fileSize.textContent = this.formatFileSize(file.size);
     fileInfo.classList.remove("hidden");
     confirmUpload.disabled = false;
+
+    // PHASE 7: Track file selection
+    this.trackInteraction("file_selected", {
+      filename: file.name,
+      size: file.size,
+      type: file.type,
+    });
   }
 
   clearFileSelection() {
@@ -874,6 +1105,7 @@ class ChatApp {
     }
   }
 
+  // PHASE 7: Enhanced clear chat with security consideration
   clearChat() {
     const chatContainer = document.getElementById("chatContainer");
     const welcomeCard = document.getElementById("welcomeCard");
@@ -889,9 +1121,20 @@ class ChatApp {
       welcomeCard.style.display = "block";
     }
 
+    // PHASE 7: Clear sensitive data from memory
     this.chatHistory = [];
+
     // PHASE 7: Clear conversation context
     this.apiService.clearConversationContext();
+
+    // PHASE 7: Track chat clearance
+    this.trackInteraction("chat_cleared", {
+      sessionId: this.userSession.sessionId,
+      messageCount: this.userSession.messageCount,
+    });
+
+    // Reset message count for new conversation
+    this.userSession.messageCount = 0;
   }
 
   copyChat() {
@@ -982,9 +1225,32 @@ class ChatApp {
   }
 }
 
-// Initialize the app when DOM is loaded
+// Initialize the app when DOM is loaded with security first
 document.addEventListener("DOMContentLoaded", () => {
-  window.chatApp = new ChatApp();
+  // Wait for security services to initialize
+  setTimeout(() => {
+    window.chatApp = new ChatApp();
+
+    // PHASE 7: Global security error handling
+    window.addEventListener("error", (event) => {
+      if (window.chatApp && window.chatApp.performanceMonitor) {
+        window.chatApp.performanceMonitor.trackError(event.error, {
+          type: "global_error",
+          filename: event.filename,
+          lineno: event.lineno,
+          colno: event.colno,
+        });
+      }
+    });
+
+    window.addEventListener("unhandledrejection", (event) => {
+      if (window.chatApp && window.chatApp.performanceMonitor) {
+        window.chatApp.performanceMonitor.trackError(new Error(event.reason), {
+          type: "unhandled_rejection",
+        });
+      }
+    });
+  }, 100);
 });
 
 // Export for use in other modules if needed

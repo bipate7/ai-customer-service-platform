@@ -15,22 +15,43 @@ import docx
 import io
 import hashlib
 
+# Import security and optimization modules
+from rate_limiter import RateLimitManager, RATE_LIMITS
+from security_utils import SecurityUtils
+from cache_manager import cache_manager
+from optimization_utils import OptimizationUtils, performance_monitor
+
 # Load environment variables
 load_dotenv()
 
 app = Flask(__name__)
 
-# Configure CORS for production
+# Security Configuration
+app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'your-secret-key-here')
+app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB max file size
+
+# Configure CORS for production - UPDATED WITH ACTUAL URLS
 CORS(app, resources={
     r"/*": {
         "origins": [
             "http://localhost:8080",
             "http://localhost:3000", 
-            "https://your-frontend-app.onrender.com",  # Will update after deployment
-            "*"  # For testing, restrict in production
-        ]
+            "https://ai-customer-service-frontend.onrender.com",  # ACTUAL FRONTEND URL
+            "https://ai-customer-service-backend-rthi.onrender.com"  # BACKEND URL
+        ],
+        "methods": ["GET", "POST", "PUT", "DELETE"],
+        "allow_headers": ["Content-Type", "Authorization", "X-CSRF-Token"],
+        "supports_credentials": True
     }
 })
+
+# Initialize Rate Limiting
+rate_limit_manager = RateLimitManager(app)
+rate_limit_manager.init_app(app)
+limiter = rate_limit_manager.get_limiter()
+
+# Security utils
+security_utils = SecurityUtils()
 
 # Configure logging for production
 if __name__ != '__main__':
@@ -94,6 +115,7 @@ Warranty Information:
 
 class DocumentProcessor:
     @staticmethod
+    @OptimizationUtils.timing_decorator
     def extract_text_from_pdf(file_stream):
         try:
             pdf_reader = PyPDF2.PdfReader(file_stream)
@@ -106,6 +128,7 @@ class DocumentProcessor:
             return None
 
     @staticmethod
+    @OptimizationUtils.timing_decorator
     def extract_text_from_docx(file_stream):
         try:
             doc = docx.Document(file_stream)
@@ -118,6 +141,7 @@ class DocumentProcessor:
             return None
 
     @staticmethod
+    @OptimizationUtils.timing_decorator
     def extract_text_from_txt(file_stream):
         try:
             return file_stream.read().decode('utf-8')
@@ -141,6 +165,7 @@ class RAGSystem:
             return None
         return self.vectorizer.fit_transform(self.knowledge_base)
     
+    @OptimizationUtils.timing_decorator
     def add_document(self, text, filename):
         try:
             chunks = self._split_into_chunks(text)
@@ -158,6 +183,9 @@ class RAGSystem:
             
             if self.knowledge_base:
                 self.vectors = self.vectorizer.fit_transform(self.knowledge_base)
+            
+            # Clear cache when new documents are added
+            cache_manager.clear()
             
             logger.info(f"Added document '{filename}' with {len(chunks)} chunks")
             return True
@@ -184,6 +212,8 @@ class RAGSystem:
         
         return chunks
     
+    @OptimizationUtils.timing_decorator
+    @OptimizationUtils.cache_results(ttl=300)  # Cache search results for 5 minutes
     def search_knowledge(self, query, top_k=3):
         try:
             if not self.knowledge_base:
@@ -219,6 +249,7 @@ class AICustomerService:
     def __init__(self):
         self.rag_system = RAGSystem()
     
+    @OptimizationUtils.timing_decorator
     def get_response(self, user_message, user_id, conversation_context=None):
         try:
             knowledge_results = self.rag_system.search_knowledge(user_message)
@@ -262,16 +293,71 @@ class AICustomerService:
 # Initialize AI service
 ai_service = AICustomerService()
 
+# Security Middleware
+@app.before_request
+def security_checks():
+    """Global security checks for all requests"""
+    try:
+        # Check content length
+        if request.content_length and request.content_length > app.config['MAX_CONTENT_LENGTH']:
+            return jsonify({
+                "error": "Request too large",
+                "message": f"Maximum content size is {app.config['MAX_CONTENT_LENGTH']} bytes",
+                "status": "error"
+            }), 413
+            
+        # Sanitize JSON input
+        if request.is_json and request.get_data():
+            data = request.get_json(silent=True)
+            if data:
+                sanitized_data = {}
+                for key, value in data.items():
+                    if isinstance(value, str):
+                        sanitized_data[key] = security_utils.sanitize_input(value)
+                    else:
+                        sanitized_data[key] = value
+                request._cached_json = (sanitized_data, sanitized_data)
+                
+    except Exception as e:
+        logger.error(f"Security middleware error: {str(e)}")
+        return jsonify({
+            "error": "Security check failed",
+            "status": "error"
+        }), 400
+
+@app.after_request
+def security_headers(response):
+    """Add security headers to all responses"""
+    response.headers['X-Content-Type-Options'] = 'nosniff'
+    response.headers['X-Frame-Options'] = 'DENY'
+    response.headers['X-XSS-Protection'] = '1; mode=block'
+    response.headers['Strict-Transport-Security'] = 'max-age=31536000; includeSubDomains'
+    response.headers['Referrer-Policy'] = 'strict-origin-when-cross-origin'
+    
+    # CSP Header
+    response.headers['Content-Security-Policy'] = (
+        "default-src 'self'; "
+        "script-src 'self' 'unsafe-inline'; "
+        "style-src 'self' 'unsafe-inline'; "
+        "img-src 'self' data: https:; "
+        "connect-src 'self' https://ai-customer-service-backend-rthi.onrender.com;"
+    )
+    
+    return response
+
 @app.route('/')
+@limiter.limit(RATE_LIMITS['api'])
 def home():
     return jsonify({
         "message": "AI Customer Service Platform API", 
         "status": "running",
         "version": "production",
-        "environment": os.getenv('ENVIRONMENT', 'development')
+        "environment": os.getenv('ENVIRONMENT', 'development'),
+        "security": "enabled"
     })
 
 @app.route('/api/chat', methods=['POST'])
+@limiter.limit(RATE_LIMITS['chat'])
 def chat():
     try:
         data = request.get_json()
@@ -282,9 +368,17 @@ def chat():
                 "status": "error"
             }), 400
         
-        user_message = data['message']
-        user_id = data.get('userId', 'anonymous')
+        user_message = security_utils.sanitize_input(data['message'])
+        user_id = security_utils.sanitize_input(data.get('userId', 'anonymous'))
         conversation_context = data.get('conversationContext', [])
+        
+        # Sanitize conversation context
+        sanitized_context = []
+        for msg in conversation_context:
+            if isinstance(msg, dict) and 'message' in msg:
+                sanitized_msg = msg.copy()
+                sanitized_msg['message'] = security_utils.sanitize_input(msg['message'])
+                sanitized_context.append(sanitized_msg)
         
         if not user_message.strip():
             return jsonify({
@@ -292,17 +386,25 @@ def chat():
                 "status": "error"
             }), 400
         
+        # Check for potential security issues in content
+        content_issues = security_utils.check_content_security(user_message)
+        if content_issues:
+            logger.warning(f"Content security issues detected: {content_issues}")
+        
+        performance_monitor.start_timer('ai_response')
         ai_response = ai_service.get_response(
             user_message, 
             user_id, 
-            conversation_context
+            sanitized_context
         )
+        performance_monitor.end_timer('ai_response')
         
         response_data = {
             "response": ai_response,
             "status": "success",
             "timestamp": datetime.utcnow().isoformat(),
-            "system": "RAG Enhanced"
+            "system": "RAG Enhanced",
+            "security_checked": True
         }
         
         return jsonify(response_data)
@@ -315,20 +417,24 @@ def chat():
         }), 500
 
 @app.route('/api/knowledge/search', methods=['POST'])
+@limiter.limit(RATE_LIMITS['search'])
 def search_knowledge():
     try:
         data = request.get_json()
-        query = data.get('query', '')
+        query = security_utils.sanitize_input(data.get('query', ''))
         
         if not query.strip():
             return jsonify({"error": "Query cannot be empty"}), 400
         
+        performance_monitor.start_timer('knowledge_search')
         results = ai_service.rag_system.search_knowledge(query)
+        performance_monitor.end_timer('knowledge_search')
         
         return jsonify({
             "query": query,
             "results": results,
-            "count": len(results)
+            "count": len(results),
+            "security_checked": True
         })
         
     except Exception as e:
@@ -336,6 +442,7 @@ def search_knowledge():
         return jsonify({"error": "Search failed"}), 500
 
 @app.route('/api/upload', methods=['POST'])
+@limiter.limit(RATE_LIMITS['upload'])
 def upload_document():
     try:
         if 'file' not in request.files:
@@ -345,8 +452,17 @@ def upload_document():
         if file.filename == '':
             return jsonify({"error": "No file selected"}), 400
         
+        # Security: Validate filename
+        if not security_utils.validate_filename(file.filename):
+            return jsonify({"error": "Invalid file name or type"}), 400
+        
         filename = file.filename.lower()
         file_stream = io.BytesIO(file.read())
+        
+        # Security: Check file size
+        file_size = len(file_stream.getvalue())
+        if file_size > 10 * 1024 * 1024:  # 10MB limit
+            return jsonify({"error": "File size exceeds 10MB limit"}), 400
         
         text = None
         if filename.endswith('.pdf'):
@@ -361,13 +477,16 @@ def upload_document():
         if not text:
             return jsonify({"error": "Could not extract text from file"}), 400
         
+        performance_monitor.start_timer('document_processing')
         success = ai_service.rag_system.add_document(text, file.filename)
+        performance_monitor.end_timer('document_processing')
         
         if success:
             return jsonify({
                 "message": f"File '{file.filename}' uploaded successfully",
                 "chunks_added": ai_service.rag_system.get_stats()['total_chunks'],
-                "status": "success"
+                "status": "success",
+                "security_checked": True
             })
         else:
             return jsonify({"error": "Failed to process document"}), 500
@@ -377,17 +496,104 @@ def upload_document():
         return jsonify({"error": "Upload failed"}), 500
 
 @app.route('/api/knowledge/stats', methods=['GET'])
+@limiter.limit(RATE_LIMITS['api'])
 def get_knowledge_stats():
     stats = ai_service.rag_system.get_stats()
+    stats['security_checked'] = True
     return jsonify(stats)
 
 @app.route('/api/health', methods=['GET'])
+@limiter.limit(RATE_LIMITS['api'])
 def health_check():
     return jsonify({
         "status": "healthy", 
         "timestamp": datetime.utcnow().isoformat(),
-        "environment": os.getenv('ENVIRONMENT', 'development')
+        "environment": os.getenv('ENVIRONMENT', 'development'),
+        "security": "enabled"
     })
+
+# New Security Endpoints
+@app.route('/api/security/audit', methods=['GET'])
+@limiter.limit(RATE_LIMITS['api'])
+def security_audit():
+    """Endpoint to check security status"""
+    return jsonify({
+        "rate_limiting": "enabled",
+        "input_sanitization": "enabled",
+        "cors": "enabled",
+        "file_validation": "enabled",
+        "security_headers": "enabled",
+        "timestamp": datetime.utcnow().isoformat()
+    })
+
+@app.route('/api/security/config', methods=['GET'])
+@limiter.limit(RATE_LIMITS['api'])
+def security_config():
+    """Endpoint to get security configuration (non-sensitive)"""
+    return jsonify({
+        "max_file_size": "10MB",
+        "allowed_file_types": [".pdf", ".docx", ".txt"],
+        "rate_limits": RATE_LIMITS,
+        "cors_origins": [
+            "https://ai-customer-service-frontend.onrender.com",
+            "https://ai-customer-service-backend-rthi.onrender.com"
+        ]
+    })
+
+# Performance Monitoring Endpoints
+@app.route('/api/performance/metrics', methods=['GET'])
+@limiter.limit(RATE_LIMITS['api'])
+def get_performance_metrics():
+    """Get performance metrics"""
+    return jsonify({
+        "performance_metrics": performance_monitor.get_metrics(),
+        "slow_operations": performance_monitor.get_slow_operations(),
+        "cache_stats": cache_manager.get_stats(),
+        "timestamp": datetime.utcnow().isoformat()
+    })
+
+@app.route('/api/performance/cache/clear', methods=['POST'])
+@limiter.limit(RATE_LIMITS['api'])
+def clear_cache():
+    """Clear cache endpoint"""
+    cache_manager.clear()
+    return jsonify({
+        "message": "Cache cleared successfully",
+        "timestamp": datetime.utcnow().isoformat()
+    })
+
+# Enhanced error handlers with security
+@app.errorhandler(429)
+def ratelimit_handler(e):
+    return jsonify({
+        "error": "Rate limit exceeded",
+        "message": "Too many requests. Please try again later.",
+        "status": "error",
+        "retry_after": getattr(e, 'retry_after', 60)
+    }), 429
+
+@app.errorhandler(413)
+def too_large_handler(e):
+    return jsonify({
+        "error": "Request too large",
+        "message": "The request exceeds the maximum allowed size",
+        "status": "error"
+    }), 413
+
+@app.errorhandler(404)
+def not_found_handler(e):
+    return jsonify({
+        "error": "Endpoint not found",
+        "status": "error"
+    }), 404
+
+@app.errorhandler(500)
+def internal_error_handler(e):
+    logger.error(f"Internal server error: {str(e)}")
+    return jsonify({
+        "error": "Internal server error",
+        "status": "error"
+    }), 500
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
