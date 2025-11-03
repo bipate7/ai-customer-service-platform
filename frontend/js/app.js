@@ -1223,6 +1223,541 @@ class ChatApp {
         currentChunks + Math.floor(Math.random() * 5) + 1;
     }
   }
+  // Add these methods to your ChatApp class in app.js
+
+  // PHASE 9: Enterprise Security & Team Collaboration
+  setupEnterpriseFeatures() {
+    this.securityManager = new SecurityManager();
+    this.teamCollaboration = new TeamCollaboration();
+
+    // Add security indicators to UI
+    this.addSecurityIndicators();
+    this.setupComplianceFeatures();
+  }
+
+  addSecurityIndicators() {
+    // Add security status to header
+    const securityStatus = document.createElement("div");
+    securityStatus.id = "securityStatus";
+    securityStatus.className = "security-status secure";
+    securityStatus.innerHTML = `
+        <i class="fas fa-shield-alt"></i>
+        <span>Secure</span>
+    `;
+
+    // Add to header
+    const header = document.querySelector(
+      "header .flex.items-center.space-x-3"
+    );
+    header.appendChild(securityStatus);
+
+    // Update security status periodically
+    this.updateSecurityStatus();
+  }
+
+  updateSecurityStatus() {
+    setInterval(() => {
+      const status = this.securityManager.getSecurityStatus();
+      const securityStatus = document.getElementById("securityStatus");
+
+      if (securityStatus) {
+        let statusText = "Secure";
+        let statusClass = "secure";
+
+        if (status.threatsDetected > 0) {
+          statusText = `${status.threatsDetected} Threats`;
+          statusClass = "critical";
+        } else if (!status.encryption) {
+          statusText = "Unencrypted";
+          statusClass = "warning";
+        }
+
+        securityStatus.className = `security-status ${statusClass}`;
+        securityStatus.innerHTML = `
+                <i class="fas fa-shield-alt"></i>
+                <span>${statusText}</span>
+            `;
+      }
+    }, 30000);
+  }
+
+  setupComplianceFeatures() {
+    // Show GDPR/CCPA compliance banners if needed
+    if (this.securityManager.securityConfig.COMPLIANCE.GDPR_ENABLED) {
+      this.showGDPRBanner();
+    }
+
+    if (this.securityManager.securityConfig.COMPLIANCE.CCPA_ENABLED) {
+      this.showCCPABanner();
+    }
+  }
+
+  showGDPRBanner() {
+    if (localStorage.getItem("gdpr_consent")) return;
+
+    const banner = document.createElement("div");
+    banner.className = "compliance-banner gdpr";
+    banner.innerHTML = `
+        <div class="flex justify-between items-start">
+            <div>
+                <h3 class="font-semibold mb-2">Your Privacy Matters</h3>
+                <p class="text-sm opacity-90">
+                    We use cookies to enhance your experience. By continuing to visit this site you agree to our use of cookies.
+                </p>
+            </div>
+            <div class="compliance-actions">
+                <button id="gdprAccept" class="compliance-btn">Accept</button>
+                <button id="gdprReject" class="compliance-btn">Reject</button>
+                <button id="gdprSettings" class="compliance-btn">Settings</button>
+            </div>
+        </div>
+    `;
+
+    document.body.insertBefore(banner, document.body.firstChild);
+    this.setupGDPREvents();
+  }
+
+  setupGDPREvents() {
+    document.getElementById("gdprAccept").addEventListener("click", () => {
+      this.securityManager.setCookieConsent(true);
+      document.querySelector(".compliance-banner").remove();
+      localStorage.setItem("gdpr_consent", "true");
+    });
+
+    document.getElementById("gdprReject").addEventListener("click", () => {
+      this.securityManager.setCookieConsent(false);
+      document.querySelector(".compliance-banner").remove();
+      localStorage.setItem("gdpr_consent", "false");
+    });
+
+    document.getElementById("gdprSettings").addEventListener("click", () => {
+      this.showPrivacySettings();
+    });
+  }
+
+  showPrivacySettings() {
+    const settingsHTML = `
+        <div id="privacySettingsModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
+            <div class="bg-white rounded-2xl shadow-2xl p-6 w-full max-w-2xl mx-4">
+                <div class="flex justify-between items-center mb-6">
+                    <h3 class="text-xl font-bold text-slate-800">Privacy Settings</h3>
+                    <button id="closePrivacySettings" class="text-slate-500 hover:text-slate-700 transition-colors">
+                        <i class="fas fa-times text-xl"></i>
+                    </button>
+                </div>
+
+                <div class="space-y-6">
+                    <div class="security-settings">
+                        <h4 class="font-semibold text-slate-800 mb-4">Data Collection</h4>
+                        <div class="space-y-4">
+                            <div class="security-setting-item">
+                                <div class="security-setting-label">
+                                    <div class="security-setting-name">Analytics & Usage Data</div>
+                                    <div class="security-setting-description">
+                                        Help us improve by sharing anonymous usage data
+                                    </div>
+                                </div>
+                                <input type="checkbox" id="analyticsConsent" ${
+                                  localStorage.getItem("analytics_consent") !==
+                                  "false"
+                                    ? "checked"
+                                    : ""
+                                }>
+                            </div>
+                            <div class="security-setting-item">
+                                <div class="security-setting-label">
+                                    <div class="security-setting-name">Personalized Experience</div>
+                                    <div class="security-setting-description">
+                                        Use your conversation history to provide better responses
+                                    </div>
+                                </div>
+                                <input type="checkbox" id="personalizationConsent" ${
+                                  localStorage.getItem(
+                                    "personalization_consent"
+                                  ) !== "false"
+                                    ? "checked"
+                                    : ""
+                                }>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="security-settings">
+                        <h4 class="font-semibold text-slate-800 mb-4">Data Management</h4>
+                        <div class="space-y-3">
+                            <button id="exportDataBtn" class="w-full text-left p-3 hover:bg-slate-50 rounded-lg transition-colors border">
+                                <i class="fas fa-download mr-3 text-blue-500"></i>
+                                <div>
+                                    <div class="font-medium">Export My Data</div>
+                                    <div class="text-sm text-slate-500">Download all your conversations and preferences</div>
+                                </div>
+                            </button>
+                            <button id="deleteDataBtn" class="w-full text-left p-3 hover:bg-slate-50 rounded-lg transition-colors border text-red-600">
+                                <i class="fas fa-trash mr-3"></i>
+                                <div>
+                                    <div class="font-medium">Delete My Data</div>
+                                    <div class="text-sm text-slate-500">Permanently remove all your data from our systems</div>
+                                </div>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flex justify-end space-x-3 mt-6">
+                    <button id="savePrivacySettings" class="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition-colors">
+                        Save Settings
+                    </button>
+                </div>
+            </div>
+        </div>
+    `;
+
+    document.body.insertAdjacentHTML("beforeend", settingsHTML);
+    this.setupPrivacySettingsEvents();
+  }
+
+  setupPrivacySettingsEvents() {
+    document
+      .getElementById("closePrivacySettings")
+      .addEventListener("click", () => {
+        document.getElementById("privacySettingsModal").remove();
+      });
+
+    document
+      .getElementById("savePrivacySettings")
+      .addEventListener("click", () => {
+        const analyticsConsent =
+          document.getElementById("analyticsConsent").checked;
+        const personalizationConsent = document.getElementById(
+          "personalizationConsent"
+        ).checked;
+
+        localStorage.setItem("analytics_consent", analyticsConsent.toString());
+        localStorage.setItem(
+          "personalization_consent",
+          personalizationConsent.toString()
+        );
+
+        // Update feature flags based on consent
+        if (window.APP_CONFIG) {
+          window.APP_CONFIG.FEATURES.ANALYTICS = analyticsConsent;
+          window.APP_CONFIG.FEATURES.PERSONALIZATION = personalizationConsent;
+        }
+
+        this.showNotification("Privacy settings saved", "success");
+        document.getElementById("privacySettingsModal").remove();
+      });
+
+    document
+      .getElementById("exportDataBtn")
+      .addEventListener("click", async () => {
+        try {
+          const userData = await this.securityManager.exportUserData();
+          this.downloadJSON(userData, "user-data-export.json");
+          this.showNotification("Data exported successfully", "success");
+        } catch (error) {
+          this.showNotification("Failed to export data", "error");
+        }
+      });
+
+    document
+      .getElementById("deleteDataBtn")
+      .addEventListener("click", async () => {
+        if (
+          confirm(
+            "Are you sure you want to delete all your data? This action cannot be undone."
+          )
+        ) {
+          try {
+            const result = await this.securityManager.deleteUserData();
+            this.showNotification(result.message, "success");
+            this.clearChat(); // Clear current session
+          } catch (error) {
+            this.showNotification("Failed to delete data", "error");
+          }
+        }
+      });
+  }
+
+  downloadJSON(data, filename) {
+    const blob = new Blob([JSON.stringify(data, null, 2)], {
+      type: "application/json",
+    });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = filename;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  // Enhanced security for message sending
+  async sendMessage() {
+    // Security check before sending
+    if (!this.securityCheck()) {
+      this.showNotification(
+        "Security check failed. Message not sent.",
+        "error"
+      );
+      return;
+    }
+
+    const messageInput = document.getElementById("messageInput");
+    const message = messageInput.value.trim();
+
+    if (!message) return;
+
+    const startTime = performance.now();
+
+    // Encrypt message if security is enabled
+    let processedMessage = message;
+    if (this.securityManager.securityConfig.ENCRYPTION.ENABLED) {
+      try {
+        processedMessage = await this.securityManager.encryptData({
+          message: message,
+          timestamp: new Date().toISOString(),
+          sessionId: this.userSession.sessionId,
+        });
+      } catch (error) {
+        console.warn("Encryption failed, sending plain text:", error);
+      }
+    }
+
+    // Log the action for audit
+    this.securityManager.auditLogger.log("CHAT", "message_sent", {
+      messageLength: message.length,
+      encrypted: this.securityManager.securityConfig.ENCRYPTION.ENABLED,
+    });
+
+    // Rest of the sendMessage implementation...
+    // [Keep your existing sendMessage code here]
+  }
+
+  securityCheck() {
+    // Perform various security checks
+    const checks = [
+      this.checkRateLimit(),
+      this.checkSuspiciousContent(),
+      this.checkSessionValidity(),
+    ];
+
+    return checks.every((check) => check === true);
+  }
+
+  checkRateLimit() {
+    // Implement rate limiting
+    const now = Date.now();
+    const lastMessageTime = this.userSession.lastMessageTime || 0;
+    const timeSinceLastMessage = now - lastMessageTime;
+
+    if (timeSinceLastMessage < 1000) {
+      // 1 second between messages
+      this.securityManager.auditLogger.log("SECURITY", "rate_limit_exceeded", {
+        timeSinceLastMessage,
+      });
+      return false;
+    }
+
+    this.userSession.lastMessageTime = now;
+    return true;
+  }
+
+  checkSuspiciousContent(message) {
+    // Check for potential security threats in message content
+    const threats = this.securityManager.detectXSSPattern(message);
+
+    if (threats) {
+      this.securityManager.auditLogger.log(
+        "SECURITY",
+        "suspicious_content_detected",
+        {
+          message: message.substring(0, 100),
+          threatType: "XSS_ATTEMPT",
+        }
+      );
+      return false;
+    }
+
+    return true;
+  }
+
+  checkSessionValidity() {
+    const sessionStart = sessionStorage.getItem("session_start");
+    if (!sessionStart) return false;
+
+    const sessionAge = Date.now() - new Date(sessionStart).getTime();
+    return sessionAge < this.securityManager.securityConfig.SESSION.TIMEOUT;
+  }
+
+  // Update init method to include enterprise features
+  init() {
+    this.setupEventListeners();
+    this.setupQuickQuestions();
+    this.setupMessageInput();
+    this.setupFileUpload();
+    this.setupVoiceInput();
+    this.setupModelSelector();
+    this.setupAnalyticsDashboard();
+    this.setupEnterpriseFeatures(); // PHASE 9
+    this.loadSessionData();
+
+    // Initialize analytics
+    this.trackSessionStart();
+  }
+
+  // Add these methods to your ChatApp class in app.js
+
+  // PHASE 8: Analytics Dashboard Integration
+  setupAnalyticsDashboard() {
+    this.analyticsDashboard = new AnalyticsDashboard();
+    this.performanceOptimizer = new PerformanceOptimizer();
+
+    // Add analytics button to header
+    this.addAnalyticsButton();
+  }
+
+  addAnalyticsButton() {
+    const analyticsBtn = document.createElement("button");
+    analyticsBtn.id = "analyticsBtn";
+    analyticsBtn.className =
+      "p-2 rounded-xl hover:bg-slate-100 transition-all duration-200";
+    analyticsBtn.innerHTML = '<i class="fas fa-chart-bar text-slate-600"></i>';
+    analyticsBtn.title = "Analytics Dashboard";
+
+    analyticsBtn.addEventListener("click", () => {
+      this.analyticsDashboard.show();
+    });
+
+    // Add to header buttons
+    const headerButtons = document.querySelector("header .flex.space-x-3");
+    headerButtons.appendChild(analyticsBtn);
+  }
+
+  // Enhanced sendMessage method with analytics
+  async sendMessage() {
+    const messageInput = document.getElementById("messageInput");
+    const message = messageInput.value.trim();
+
+    if (!message) return;
+
+    const startTime = performance.now();
+
+    // Add user message to chat
+    this.addMessageToChat(message, "user");
+    messageInput.value = "";
+    messageInput.style.height = "auto";
+
+    // Update session
+    this.userSession.messageCount++;
+
+    // Hide character counter
+    document.getElementById("charCounter").classList.add("hidden");
+
+    try {
+      // PHASE 7: Show appropriate typing indicator
+      const typingType = this.detectTypingType(message);
+      this.realTimeTyping.showTypingIndicator(typingType);
+
+      // PHASE 7: Analyze sentiment
+      const sentiment = await this.apiService.analyzeSentiment(message);
+
+      // PHASE 7: Get conversation context
+      const context = this.apiService.getConversationContext();
+
+      // PHASE 7: Enhanced chat with multi-model support
+      const response = await this.apiService.chat(message, context, {
+        modelType: this.userSession.preferredModel,
+      });
+
+      const responseTime = performance.now() - startTime;
+
+      this.realTimeTyping.hideTypingIndicator();
+
+      // PHASE 7: Add AI response with streaming effect
+      await this.addStreamingResponse(
+        response.response,
+        sentiment,
+        response.modelUsed
+      );
+
+      // PHASE 8: Record analytics
+      this.recordAnalytics(
+        message,
+        response.response,
+        response.modelUsed,
+        responseTime,
+        sentiment
+      );
+
+      // PHASE 7: Track successful interaction
+      this.trackInteraction("message_sent", {
+        model: response.modelUsed,
+        sentiment: sentiment?.label,
+        length: message.length,
+        responseTime: responseTime,
+      });
+    } catch (error) {
+      this.realTimeTyping.hideTypingIndicator();
+      this.handleError("Failed to get response. Please try again.", error);
+
+      // PHASE 8: Record error analytics
+      this.recordErrorAnalytics(message, error);
+
+      // PHASE 7: Track error
+      this.trackInteraction("message_error", { error: error.message });
+    }
+
+    this.saveSessionData();
+  }
+
+  // PHASE 8: Analytics recording
+  recordAnalytics(userMessage, aiResponse, modelUsed, responseTime, sentiment) {
+    if (this.analyticsDashboard) {
+      this.analyticsDashboard.recordMessage(
+        userMessage,
+        aiResponse,
+        modelUsed,
+        responseTime,
+        sentiment
+      );
+    }
+
+    // Record performance metrics
+    if (this.performanceOptimizer) {
+      this.performanceOptimizer.recordMetric(
+        "chat_response_time",
+        responseTime,
+        {
+          model: modelUsed,
+          messageLength: userMessage.length,
+        }
+      );
+    }
+  }
+
+  recordErrorAnalytics(userMessage, error) {
+    if (this.performanceOptimizer) {
+      this.performanceOptimizer.recordMetric("chat_error", 1, {
+        errorType: error.name,
+        message: userMessage.substring(0, 50),
+      });
+    }
+  }
+
+  // Update init method to include analytics
+  init() {
+    this.setupEventListeners();
+    this.setupQuickQuestions();
+    this.setupMessageInput();
+    this.setupFileUpload();
+    this.setupVoiceInput();
+    this.setupModelSelector();
+    this.setupAnalyticsDashboard(); // PHASE 8
+    this.loadSessionData();
+
+    // Initialize analytics
+    this.trackSessionStart();
+  }
 }
 
 // Initialize the app when DOM is loaded with security first

@@ -879,6 +879,159 @@ class ChatManager {
       return false;
     }
   }
+  // Add these methods to your ChatApp class in app.js
+
+  // PHASE 8: Analytics Dashboard Integration
+  setupAnalyticsDashboard() {
+    this.analyticsDashboard = new AnalyticsDashboard();
+    this.performanceOptimizer = new PerformanceOptimizer();
+
+    // Add analytics button to header
+    this.addAnalyticsButton();
+  }
+
+  addAnalyticsButton() {
+    const analyticsBtn = document.createElement("button");
+    analyticsBtn.id = "analyticsBtn";
+    analyticsBtn.className =
+      "p-2 rounded-xl hover:bg-slate-100 transition-all duration-200";
+    analyticsBtn.innerHTML = '<i class="fas fa-chart-bar text-slate-600"></i>';
+    analyticsBtn.title = "Analytics Dashboard";
+
+    analyticsBtn.addEventListener("click", () => {
+      this.analyticsDashboard.show();
+    });
+
+    // Add to header buttons
+    const headerButtons = document.querySelector("header .flex.space-x-3");
+    headerButtons.appendChild(analyticsBtn);
+  }
+
+  // Enhanced sendMessage method with analytics
+  async sendMessage() {
+    const messageInput = document.getElementById("messageInput");
+    const message = messageInput.value.trim();
+
+    if (!message) return;
+
+    const startTime = performance.now();
+
+    // Add user message to chat
+    this.addMessageToChat(message, "user");
+    messageInput.value = "";
+    messageInput.style.height = "auto";
+
+    // Update session
+    this.userSession.messageCount++;
+
+    // Hide character counter
+    document.getElementById("charCounter").classList.add("hidden");
+
+    try {
+      // PHASE 7: Show appropriate typing indicator
+      const typingType = this.detectTypingType(message);
+      this.realTimeTyping.showTypingIndicator(typingType);
+
+      // PHASE 7: Analyze sentiment
+      const sentiment = await this.apiService.analyzeSentiment(message);
+
+      // PHASE 7: Get conversation context
+      const context = this.apiService.getConversationContext();
+
+      // PHASE 7: Enhanced chat with multi-model support
+      const response = await this.apiService.chat(message, context, {
+        modelType: this.userSession.preferredModel,
+      });
+
+      const responseTime = performance.now() - startTime;
+
+      this.realTimeTyping.hideTypingIndicator();
+
+      // PHASE 7: Add AI response with streaming effect
+      await this.addStreamingResponse(
+        response.response,
+        sentiment,
+        response.modelUsed
+      );
+
+      // PHASE 8: Record analytics
+      this.recordAnalytics(
+        message,
+        response.response,
+        response.modelUsed,
+        responseTime,
+        sentiment
+      );
+
+      // PHASE 7: Track successful interaction
+      this.trackInteraction("message_sent", {
+        model: response.modelUsed,
+        sentiment: sentiment?.label,
+        length: message.length,
+        responseTime: responseTime,
+      });
+    } catch (error) {
+      this.realTimeTyping.hideTypingIndicator();
+      this.handleError("Failed to get response. Please try again.", error);
+
+      // PHASE 8: Record error analytics
+      this.recordErrorAnalytics(message, error);
+
+      // PHASE 7: Track error
+      this.trackInteraction("message_error", { error: error.message });
+    }
+
+    this.saveSessionData();
+  }
+
+  // PHASE 8: Analytics recording
+  recordAnalytics(userMessage, aiResponse, modelUsed, responseTime, sentiment) {
+    if (this.analyticsDashboard) {
+      this.analyticsDashboard.recordMessage(
+        userMessage,
+        aiResponse,
+        modelUsed,
+        responseTime,
+        sentiment
+      );
+    }
+
+    // Record performance metrics
+    if (this.performanceOptimizer) {
+      this.performanceOptimizer.recordMetric(
+        "chat_response_time",
+        responseTime,
+        {
+          model: modelUsed,
+          messageLength: userMessage.length,
+        }
+      );
+    }
+  }
+
+  recordErrorAnalytics(userMessage, error) {
+    if (this.performanceOptimizer) {
+      this.performanceOptimizer.recordMetric("chat_error", 1, {
+        errorType: error.name,
+        message: userMessage.substring(0, 50),
+      });
+    }
+  }
+
+  // Update init method to include analytics
+  init() {
+    this.setupEventListeners();
+    this.setupQuickQuestions();
+    this.setupMessageInput();
+    this.setupFileUpload();
+    this.setupVoiceInput();
+    this.setupModelSelector();
+    this.setupAnalyticsDashboard(); // PHASE 8
+    this.loadSessionData();
+
+    // Initialize analytics
+    this.trackSessionStart();
+  }
 }
 
 // Initialize Chat Manager when DOM is loaded
