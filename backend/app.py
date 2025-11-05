@@ -17,6 +17,7 @@ import hashlib
 # Import security and optimization modules
 from rate_limiter import RateLimitManager, RATE_LIMITS
 from security_utils import SecurityUtils
+from optimization_utils import OptimizationUtils, performance_monitor
 
 # Load environment variables
 load_dotenv()
