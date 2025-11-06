@@ -16,10 +16,6 @@ import hashlib
 import time
 import functools
 
-# Import security and optimization modules
-from rate_limiter import RateLimitManager, RATE_LIMITS
-from security_utils import SecurityUtils
-
 # Load environment variables
 load_dotenv()
 
@@ -29,7 +25,7 @@ app = Flask(__name__)
 app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'your-secret-key-here')
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB max file size
 
-# Simple Cache Implementation (replaces Flask-Caching)
+# Simple Cache Implementation
 class SimpleCache:
     def __init__(self):
         self._cache = {}
@@ -49,28 +45,8 @@ class SimpleCache:
 # Initialize cache
 cache_manager = SimpleCache()
 
-# Configure CORS for production
-CORS(app, resources={
-    r"/*": {
-        "origins": [
-            "http://localhost:8080",
-            "http://localhost:3000", 
-            "https://ai-customer-service-frontend.onrender.com",
-            "https://ai-customer-service-backend-rthi.onrender.com"
-        ],
-        "methods": ["GET", "POST", "PUT", "DELETE"],
-        "allow_headers": ["Content-Type", "Authorization", "X-CSRF-Token"],
-        "supports_credentials": True
-    }
-})
-
-# Initialize Rate Limiting
-rate_limit_manager = RateLimitManager(app)
-rate_limit_manager.init_app(app)
-limiter = rate_limit_manager.get_limiter()
-
-# Security utils
-security_utils = SecurityUtils()
+# Configure CORS - SIMPLIFIED FOR DEBUGGING
+CORS(app)  # Allow all origins temporarily
 
 # Configure logging for production
 if __name__ != '__main__':
@@ -99,7 +75,7 @@ def performance_monitor(func):
         return result
     return wrapper
 
-# Initial knowledge base (your existing content)
+# Initial knowledge base
 INITIAL_KNOWLEDGE_BASE = """
 TechCorp Customer Service Guidelines:
 
@@ -283,14 +259,20 @@ class AICustomerService:
     @performance_monitor
     def get_response(self, user_message, user_id, conversation_context=None):
         try:
+            print(f"🔍 Searching knowledge for: {user_message}")
             knowledge_results = self.rag_system.search_knowledge(user_message)
+            print(f"📚 Found {len(knowledge_results)} knowledge results")
             
             if knowledge_results:
-                return self._generate_response_from_knowledge(user_message, knowledge_results)
+                response = self._generate_response_from_knowledge(user_message, knowledge_results)
             else:
-                return self._get_general_response(user_message)
+                response = self._get_general_response(user_message)
+            
+            print(f"🤖 Generated response: {response}")
+            return response
             
         except Exception as e:
+            print(f"❌ AI service error: {str(e)}")
             logger.error(f"AI service error: {str(e)}")
             return self._get_fallback_response(user_message)
     
@@ -301,28 +283,26 @@ class AICustomerService:
     def _generate_smart_response(self, user_message, context):
         lower_msg = user_message.lower()
         
-        response = "Based on our documentation: "
-        
+        # Simple keyword-based responses for testing
         if any(word in lower_msg for word in ['hour', 'time', 'open', 'close']):
-            return response + "We're open Monday-Friday 9AM-6PM EST and Saturday 10AM-4PM EST. We're closed on Sundays. Holiday hours may vary."
+            return "Our business hours are Monday to Friday 9:00 AM - 6:00 PM EST and Saturday 10:00 AM - 4:00 PM EST. We're closed on Sundays."
+        
+        elif any(word in lower_msg for word in ['contact', 'phone', 'email', 'call', 'reach']):
+            return "You can contact us at 1-800-TECH-CORP or support@techcorp.com. Live chat is available on our website during business hours."
         
         elif any(word in lower_msg for word in ['password', 'reset', 'forgot']):
-            return response + "Go to the login page, click 'Forgot Password', enter your email, and check for a reset link (valid for 2 hours). You'll need to create a new password with at least 8 characters including 1 uppercase letter and 1 number."
+            return "To reset your password, go to the login page and click 'Forgot Password'. Enter your email and follow the instructions in the reset link (valid for 2 hours)."
         
-        elif any(word in lower_msg for word in ['order', 'track', 'delivery', 'shipping']):
-            return response + "You can track your order by logging into your account and visiting 'Order History'. We offer Standard (3-5 days), Express (2 days), and Overnight shipping. Free shipping is available on orders over $50."
+        elif any(word in lower_msg for word in ['order', 'track', 'shipping', 'delivery']):
+            return "You can track your order by logging into your account and visiting 'Order History'. We offer Standard (3-5 days), Express (2 days), and Overnight shipping."
         
-        elif any(word in lower_msg for word in ['return', 'refund', 'exchange']):
-            return response + "We have a 30-day return policy from delivery date. Items must be in original condition with tags. Electronics need to be factory reset. Software and digital products are non-refundable."
-        
-        elif any(word in lower_msg for word in ['contact', 'phone', 'email', 'call']):
-            return response + "You can reach us at 1-800-TECH-CORP or support@techcorp.com during business hours. Live chat is also available on our website."
+        elif any(word in lower_msg for word in ['return', 'refund']):
+            return "We have a 30-day return policy. Items must be in original condition. Electronics need factory reset. Software products are non-refundable."
         
         else:
-            return response + f"{context[:300]}... How can I help you further with this?"
-    
+            return f"I understand you're asking about: '{user_message}'. Based on our documentation: {context[:200]}... How can I assist you further?"
+
     def _get_general_response(self, user_message):
-        """Handle general questions not in knowledge base"""
         lower_msg = user_message.lower()
         
         if any(word in lower_msg for word in ['hello', 'hi', 'hey']):
@@ -332,44 +312,53 @@ class AICustomerService:
         elif any(word in lower_msg for word in ['bye', 'goodbye']):
             return "Thank you for contacting TechCorp Customer Service. Have a great day!"
         else:
-            return "I understand you're asking about: " + user_message + ". For specific information about business hours, orders, returns, or technical support, please provide more details and I'll be happy to help!"
+            return f"Thank you for your question about '{user_message}'. I'm here to help with business hours, orders, returns, technical support, and more. Could you provide more specific details?"
 
     def _get_fallback_response(self, user_message):
-        """Fallback response when there's an error"""
         return "I apologize, but I'm having trouble processing your request right now. Please try again in a moment."
 
 # Initialize AI service
 ai_service = AICustomerService()
 
 @app.route('/')
-@limiter.limit(RATE_LIMITS['api'])
 def home():
     return jsonify({
         "message": "AI Customer Service Platform API", 
         "status": "running",
-        "version": "production",
-        "environment": os.getenv('ENVIRONMENT', 'development'),
-        "security": "enabled"
+        "version": "1.0",
+        "timestamp": datetime.utcnow().isoformat()
     })
 
-@app.route('/chat', methods=['POST'])
-@limiter.limit(RATE_LIMITS['chat'])
+@app.route('/chat', methods=['POST', 'OPTIONS'])
 def chat():
     try:
+        # Handle preflight requests
+        if request.method == 'OPTIONS':
+            response = jsonify({'status': 'ok'})
+            response.headers.add('Access-Control-Allow-Origin', '*')
+            response.headers.add('Access-Control-Allow-Headers', 'Content-Type,Authorization')
+            response.headers.add('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS')
+            return response
+            
+        print("=== CHAT ENDPOINT CALLED ===")
         data = request.get_json()
-        if not data or 'message' not in data:
-            return jsonify({"error": "Message is required"}), 400
+        print(f"Request data: {data}")
         
+        if not data:
+            return jsonify({"error": "No JSON data received"}), 400
+            
         user_message = data.get('message', '').strip()
         user_id = data.get('user_id', 'anonymous')
         
         if not user_message:
             return jsonify({"error": "Message cannot be empty"}), 400
         
-        logger.info(f"Chat request from {user_id}: {user_message}")
+        print(f"📩 Message from {user_id}: {user_message}")
         
         # Get response from AI service
         response = ai_service.get_response(user_message, user_id)
+        
+        print(f"📤 Sending response: {response}")
         
         return jsonify({
             "response": response,
@@ -378,6 +367,7 @@ def chat():
         })
         
     except Exception as e:
+        print(f"💥 ERROR in chat endpoint: {str(e)}")
         logger.error(f"Error in chat endpoint: {str(e)}")
         return jsonify({
             "error": "I apologize, but I'm having trouble processing your request right now. Please try again in a moment."
@@ -388,11 +378,11 @@ def health_check():
     return jsonify({
         "status": "healthy",
         "timestamp": datetime.utcnow().isoformat(),
-        "service": "AI Customer Service Backend"
+        "service": "AI Customer Service Backend",
+        "environment": os.getenv('ENVIRONMENT', 'production')
     })
 
 @app.route('/stats', methods=['GET'])
-@limiter.limit(RATE_LIMITS['api'])
 def get_stats():
     try:
         stats = ai_service.rag_system.get_stats()
@@ -409,4 +399,5 @@ def get_stats():
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
+    print(f"🚀 Starting server on port {port}")
     app.run(host='0.0.0.0', port=port, debug=False)
