@@ -13,11 +13,12 @@ import PyPDF2
 import docx
 import io
 import hashlib
+import time
+import functools
 
 # Import security and optimization modules
 from rate_limiter import RateLimitManager, RATE_LIMITS
 from security_utils import SecurityUtils
-from optimization_utils import OptimizationUtils, performance_monitor
 
 # Load environment variables
 load_dotenv()
@@ -85,6 +86,19 @@ logger = app.logger
 UPLOAD_FOLDER = 'uploads'
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
+# Performance monitoring decorator
+def performance_monitor(func):
+    """Decorator to monitor performance of functions"""
+    @functools.wraps(func)
+    def wrapper(*args, **kwargs):
+        start_time = time.time()
+        result = func(*args, **kwargs)
+        end_time = time.time()
+        execution_time = end_time - start_time
+        logger.info(f"Function {func.__name__} executed in {execution_time:.4f} seconds")
+        return result
+    return wrapper
+
 # Initial knowledge base (your existing content)
 INITIAL_KNOWLEDGE_BASE = """
 TechCorp Customer Service Guidelines:
@@ -133,7 +147,7 @@ Warranty Information:
 
 class DocumentProcessor:
     @staticmethod
-    @OptimizationUtils.timing_decorator
+    @performance_monitor
     def extract_text_from_pdf(file_stream):
         try:
             pdf_reader = PyPDF2.PdfReader(file_stream)
@@ -146,7 +160,7 @@ class DocumentProcessor:
             return None
 
     @staticmethod
-    @OptimizationUtils.timing_decorator
+    @performance_monitor
     def extract_text_from_docx(file_stream):
         try:
             doc = docx.Document(file_stream)
@@ -159,7 +173,7 @@ class DocumentProcessor:
             return None
 
     @staticmethod
-    @OptimizationUtils.timing_decorator
+    @performance_monitor
     def extract_text_from_txt(file_stream):
         try:
             return file_stream.read().decode('utf-8')
@@ -183,7 +197,7 @@ class RAGSystem:
             return None
         return self.vectorizer.fit_transform(self.knowledge_base)
     
-    @OptimizationUtils.timing_decorator
+    @performance_monitor
     def add_document(self, text, filename):
         try:
             chunks = self._split_into_chunks(text)
@@ -230,7 +244,7 @@ class RAGSystem:
         
         return chunks
     
-    @OptimizationUtils.timing_decorator
+    @performance_monitor
     def search_knowledge(self, query, top_k=3):
         try:
             if not self.knowledge_base:
@@ -266,7 +280,7 @@ class AICustomerService:
     def __init__(self):
         self.rag_system = RAGSystem()
     
-    @OptimizationUtils.timing_decorator
+    @performance_monitor
     def get_response(self, user_message, user_id, conversation_context=None):
         try:
             knowledge_results = self.rag_system.search_knowledge(user_message)
@@ -306,12 +320,26 @@ class AICustomerService:
         
         else:
             return response + f"{context[:300]}... How can I help you further with this?"
+    
+    def _get_general_response(self, user_message):
+        """Handle general questions not in knowledge base"""
+        lower_msg = user_message.lower()
+        
+        if any(word in lower_msg for word in ['hello', 'hi', 'hey']):
+            return "Hello! Welcome to TechCorp Customer Service. How can I assist you today?"
+        elif any(word in lower_msg for word in ['thank', 'thanks']):
+            return "You're welcome! Is there anything else I can help you with?"
+        elif any(word in lower_msg for word in ['bye', 'goodbye']):
+            return "Thank you for contacting TechCorp Customer Service. Have a great day!"
+        else:
+            return "I understand you're asking about: " + user_message + ". For specific information about business hours, orders, returns, or technical support, please provide more details and I'll be happy to help!"
+
+    def _get_fallback_response(self, user_message):
+        """Fallback response when there's an error"""
+        return "I apologize, but I'm having trouble processing your request right now. Please try again in a moment."
 
 # Initialize AI service
 ai_service = AICustomerService()
-
-# Security Middleware and routes remain the same as your original code...
-# [Keep all your existing security middleware and routes exactly as they are]
 
 @app.route('/')
 @limiter.limit(RATE_LIMITS['api'])
@@ -324,7 +352,60 @@ def home():
         "security": "enabled"
     })
 
-# Keep all your other routes exactly as they were...
+@app.route('/chat', methods=['POST'])
+@limiter.limit(RATE_LIMITS['chat'])
+def chat():
+    try:
+        data = request.get_json()
+        if not data or 'message' not in data:
+            return jsonify({"error": "Message is required"}), 400
+        
+        user_message = data.get('message', '').strip()
+        user_id = data.get('user_id', 'anonymous')
+        
+        if not user_message:
+            return jsonify({"error": "Message cannot be empty"}), 400
+        
+        logger.info(f"Chat request from {user_id}: {user_message}")
+        
+        # Get response from AI service
+        response = ai_service.get_response(user_message, user_id)
+        
+        return jsonify({
+            "response": response,
+            "message_id": hashlib.md5(f"{user_id}{datetime.utcnow().isoformat()}".encode()).hexdigest(),
+            "timestamp": datetime.utcnow().isoformat()
+        })
+        
+    except Exception as e:
+        logger.error(f"Error in chat endpoint: {str(e)}")
+        return jsonify({
+            "error": "I apologize, but I'm having trouble processing your request right now. Please try again in a moment."
+        }), 500
+
+@app.route('/health', methods=['GET'])
+def health_check():
+    return jsonify({
+        "status": "healthy",
+        "timestamp": datetime.utcnow().isoformat(),
+        "service": "AI Customer Service Backend"
+    })
+
+@app.route('/stats', methods=['GET'])
+@limiter.limit(RATE_LIMITS['api'])
+def get_stats():
+    try:
+        stats = ai_service.rag_system.get_stats()
+        cache_stats = cache_manager.get_stats()
+        
+        return jsonify({
+            "knowledge_base_stats": stats,
+            "cache_stats": cache_stats,
+            "system_status": "operational"
+        })
+    except Exception as e:
+        logger.error(f"Error getting stats: {str(e)}")
+        return jsonify({"error": "Unable to retrieve statistics"}), 500
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
