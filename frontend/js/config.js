@@ -154,7 +154,7 @@ class ConfigManager {
       window.location.hostname === "localhost" ||
       window.location.hostname === "127.0.0.1"
     ) {
-      return "http://localhost:3000"; // Your local development server
+      return "http://localhost:5000"; // Your local development server
     }
 
     // Production - your Render backend URL
